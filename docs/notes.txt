@@ -1,0 +1,123 @@
+Startup Logic Priority
+
+When Job Engine starts:
+
+Step 1
+
+Load AppParams
+
+If numberOfThreads exists
+
+Use it
+
+Else use YAML
+
+
+Step 2
+
+Load JobProcessor
+
+If exists
+
+Load from DB
+
+Else
+
+Load YAML
+
+and insert into DB
+
+
+Step 3
+
+Load JobProcessorInstances
+
+Create runtime instances
+
+
+Step 4
+
+Start Thread Pool
+4. File Storage Design
+
+Example:
+
+jobproc/
+
+   inputFiles/
+
+      1001/
+
+         file1.csv
+
+         file2.json
+
+   outputFiles/
+
+      2001/
+
+         result.csv
+
+DB stores path only
+
+5. Example AppParams Usage
+
+Change threads at runtime:
+
+Controller:
+
+POST /appParam
+
+name=numberOfThreads
+
+value=10
+
+Saved in DB
+
+Restart safe
+
+6. Summary Diagram
+                AppParams
+                    |
+                    |
+                JobEngine
+                   |
+     -------------------------------
+     |                             |
+JobProcessor                 ThreadPool
+     |
+JobProcessorInstances
+     |
+InputData
+     |
+InputDataParam
+     |
+InputDataFile
+     |
+OutputData
+     |
+OutputDataParam
+     |
+OutputDataFile
+     |
+JobError
+
+TODO:
+
+Full working:
+
+Spring Boot Entities
+
+JPA repositories
+
+Dynamic class loader
+
+Thread pool engine
+
+REST controllers
+
+
+see design for html
+ jobs.html
+ createJob.html
+ viewJobs.html

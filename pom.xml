@@ -1,0 +1,304 @@
+<!--
+    Project: Job Processor Engine
+    Package: com.sel2in.jobProc
+    Main Class: JobProcApp
+    Author: Tushar Kapila
+
+    ============================================
+    BUILD INSTRUCTIONS
+    ============================================
+
+    Clean build:
+
+        mvn clean package
+
+
+    ============================================
+    FAT JAR (Runnable)
+    ============================================
+
+    File:
+
+        target/jobProc-1.0.0-fat.jar
+
+    Run:
+
+        java -jar target/jobProc-1.0.0-fat.jar
+
+
+    ============================================
+    SLIM JAR (Non executable)
+    ============================================
+
+    File:
+
+        target/jobProc-1.0.0.jar
+
+    Run:
+
+        java -cp "target/jobProc-1.0.0.jar:target/lib/*" com.sel2in.jobProc.JobProcApp
+
+
+
+    ============================================
+    Extract dependencies (for slim jar):
+
+        mvn dependency:copy-dependencies -DoutputDirectory=target/lib
+
+
+-->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.sel2in</groupId>
+
+    <artifactId>jobProc</artifactId>
+
+    <version>1.0.0</version>
+
+    <packaging>jar</packaging>
+
+    <name>Job Processor Engine</name>
+
+    <description>Dynamic Job Processor Engine</description>
+
+
+    <!-- Spring Boot Parent -->
+
+    <parent>
+
+        <groupId>org.springframework.boot</groupId>
+
+        <artifactId>spring-boot-starter-parent</artifactId>
+
+        <version>2.7.18</version>
+
+        <relativePath/>
+
+    </parent>
+
+
+    <properties>
+
+        <java.version>11</java.version>
+
+        <maven.compiler.source>11</maven.compiler.source>
+
+        <maven.compiler.target>11</maven.compiler.target>
+
+        <start-class>com.sel2in.jobProc.JobProcApp</start-class>
+
+    </properties>
+
+
+
+    <dependencies>
+
+
+        <!-- Spring Boot Core -->
+
+        <dependency>
+
+            <groupId>org.springframework.boot</groupId>
+
+            <artifactId>spring-boot-starter</artifactId>
+
+        </dependency>
+
+
+
+        <!-- Web / Controller / Embedded HTML -->
+
+        <dependency>
+
+            <groupId>org.springframework.boot</groupId>
+
+            <artifactId>spring-boot-starter-web</artifactId>
+
+        </dependency>
+
+
+
+        <!-- Spring Batch -->
+
+        <dependency>
+
+            <groupId>org.springframework.boot</groupId>
+
+            <artifactId>spring-boot-starter-batch</artifactId>
+
+        </dependency>
+
+
+
+        <!-- Scheduler / Cron -->
+
+        <dependency>
+
+            <groupId>org.springframework.boot</groupId>
+
+            <artifactId>spring-boot-starter-quartz</artifactId>
+
+        </dependency>
+
+
+
+        <!-- Thymeleaf for embedded HTML -->
+
+        <dependency>
+
+            <groupId>org.springframework.boot</groupId>
+
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+
+        </dependency>
+
+
+
+        <!-- Lombok (optional but recommended) -->
+
+        <dependency>
+
+            <groupId>org.projectlombok</groupId>
+
+            <artifactId>lombok</artifactId>
+
+            <optional>true</optional>
+
+        </dependency>
+
+
+
+        <!-- Test -->
+
+        <dependency>
+
+            <groupId>org.springframework.boot</groupId>
+
+            <artifactId>spring-boot-starter-test</artifactId>
+
+            <scope>test</scope>
+
+        </dependency>
+
+
+    </dependencies>
+
+
+
+    <build>
+
+        <plugins>
+
+
+            <!-- Spring Boot fat jar plugin -->
+
+            <plugin>
+
+                <groupId>org.springframework.boot</groupId>
+
+                <artifactId>spring-boot-maven-plugin</artifactId>
+
+                <configuration>
+
+                    <mainClass>com.sel2in.jobProc.JobProcApp</mainClass>
+
+                    <classifier>fat</classifier>
+
+                </configuration>
+
+                <executions>
+
+                    <execution>
+
+                        <goals>
+
+                            <goal>repackage</goal>
+
+                        </goals>
+
+                    </execution>
+
+                </executions>
+
+            </plugin>
+
+
+
+            <!-- Slim jar plugin -->
+
+            <plugin>
+
+                <groupId>org.apache.maven.plugins</groupId>
+
+                <artifactId>maven-jar-plugin</artifactId>
+
+                <configuration>
+
+                    <archive>
+
+                        <manifest>
+
+                            <mainClass>com.sel2in.jobProc.JobProcApp</mainClass>
+
+                        </manifest>
+
+                    </archive>
+
+                </configuration>
+
+            </plugin>
+
+
+
+            <!-- Copy dependencies -->
+
+            <plugin>
+
+                <groupId>org.apache.maven.plugins</groupId>
+
+                <artifactId>maven-dependency-plugin</artifactId>
+
+                <executions>
+
+                    <execution>
+
+                        <id>copy-dependencies</id>
+
+                        <phase>package</phase>
+
+                        <goals>
+
+                            <goal>copy-dependencies</goal>
+
+                        </goals>
+
+                        <configuration>
+
+                            <outputDirectory>
+
+                                ${project.build.directory}/lib
+
+                            </outputDirectory>
+
+                        </configuration>
+
+                    </execution>
+
+                </executions>
+
+            </plugin>
+
+
+
+        </plugins>
+
+    </build>
+
+
+</project>

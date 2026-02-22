@@ -1,21 +1,56 @@
+# Java
 target/
 *.class
 *.jar
 *.war
 *.ear
+bin/
+out/
+
+# Logs
 *.log
+logs/
+*.log.*
+
+# Spring Boot
+spring.log
+application-*.log
+
+# Package Files
+*.nar
+*.zip
+*.tar.gz
+*.rar
 
 # IntelliJ IDEA
 .idea/
 *.iml
+*.iws
+*.ipr
 
 # Eclipse
 .settings/
 .project
 .classpath
+.metadata/
 
 # VS Code
 .vscode/
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# HTML/Frontend temporary files
+*.tmp
+*.bak
+*.swp
+*~
+.cache/
+node_modules/
 
 # OS generated files
 .DS_Store

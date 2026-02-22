@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Job Management - Job Processor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f8;
+            margin: 20px;
+            color: #333;
+        }
+
+        h1,
+        h2 {
+            color: #0b5394;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: auto;
+        }
+
+        .section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 10px;
+            background: white;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        th {
+            background-color: #0b5394;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="text"],
+        input[type="date"],
+        input[type="datetime-local"],
+        input[type="file"],
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #0b5394;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #083e70;
+        }
+
+        .status-success {
+            color: green;
+            font-weight: bold;
+        }
+
+        .status-failed {
+            color: red;
+            font-weight: bold;
+        }
+
+        .status-running {
+            color: orange;
+            font-weight: bold;
+        }
+
+        .nav {
+            margin-bottom: 20px;
+        }
+
+        .nav a {
+            margin-right: 15px;
+            text-decoration: none;
+            color: #0b5394;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="nav">
+            <a href="jobs.html">Jobs Home</a>
+            <a href="jobsProcs.html">Manage Processors</a>
+        </div>
+
+        <h1>Job Management</h1>
+
+        <!-- Schedule Job Section -->
+        <div class="section">
+            <h2>Schedule New Job: Date File Transaction</h2>
+            <p><small>Processor: <code>com.sel2in.jobProc.processors.DateFileTxn</code></small></p>
+
+            <form id="scheduleJobForm" enctype="multipart/form-data">
+                <input type="hidden" name="processorClassName" value="com.sel2in.jobProc.processors.DateFileTxn">
+
+                <div class="form-group">
+                    <label for="jobName">Job Name</label>
+                    <input type="text" id="jobName" name="jobName" placeholder="e.g., Monthly Audit" required>
+                </div>
+
+                <div style="display: flex; gap: 20px;">
+                    <div class="form-group" style="flex: 1;">
+                        <label for="dateStart">Start Date</label>
+                        <input type="date" id="dateStart" name="dateStart" required>
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label for="dateEnd">End Date</label>
+                        <input type="date" id="dateEnd" name="dateEnd" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="customerCode">Customer Code</label>
+                    <input type="text" id="customerCode" name="customerCode" placeholder="Enter code" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="txnFile">Txns (Transaction File)</label>
+                    <input type="file" id="txnFile" name="Txns" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="scheduledTime">Schedule Run (Date & Time)</label>
+                    <input type="datetime-local" id="scheduledTime" name="scheduledTime" required>
+                </div>
+
+                <button type="button" onclick="submitJob()">Schedule Job</button>
+            </form>
+        </div>
+
+        <!-- Job Status Table -->
+        <div class="section">
+            <h2>Recent Jobs & Status</h2>
+            <table id="jobsStatusTable">
+                <thead>
+                    <tr>
+                        <th>Job ID</th>
+                        <th>Name</th>
+                        <th>Processor</th>
+                        <th>Submitted</th>
+                        <th>Started</th>
+                        <th>Finished</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Sample Data -->
+                    <tr>
+                        <td>1001</td>
+                        <td>Audit Nov 2025</td>
+                        <td>DateFileTxn</td>
+                        <td>2025-11-23 10:00</td>
+                        <td>2025-11-23 10:05</td>
+                        <td>2025-11-23 10:12</td>
+                        <td><span class="status-success">SUCCESS</span></td>
+                        <td><button onclick="viewLog(1001)">Log</button></td>
+                    </tr>
+                    <tr>
+                        <td>1002</td>
+                        <td>Audit Dec 2025</td>
+                        <td>DateFileTxn</td>
+                        <td>2025-12-23 09:00</td>
+                        <td>2025-12-23 09:01</td>
+                        <td>2025-12-23 09:05</td>
+                        <td><span class="status-failed">FAILED</span></td>
+                        <td><button onclick="viewLog(1002)">Log</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = "http://localhost:8087/api/job";
+
+        // Handle URL parameters to pre-fill processor
+        window.onload = function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            const processor = urlParams.get('processor');
+            if (processor) {
+                document.getElementById('jobName').value = "Job for " + processor.split('.').pop();
+                // In a real app, you might lock the processor or show specific fields
+                if (processor === "com.sel2in.jobProc.processors.DateFileTxn") {
+                    // This is our test processor
+                } else {
+                    alert("Scheduling for processor: " + processor + "\n(Using generic DateFileTxn form for demo)");
+                }
+            }
+            refreshJobTable();
+        };
+
+        function submitJob() {
+            const form = document.getElementById('scheduleJobForm');
+            const formData = new FormData(form);
+
+            // In a real implementation, you would send this to the backend
+            console.log("Submitting job...");
+            for (let [key, value] of formData.entries()) {
+                console.log(key, value);
+            }
+
+            // Simulating API call
+            alert("Job Scheduled Successfully!\nProcessor: com.sel2in.jobProc.processors.DateFileTxn\nJar: /data/jobProc/dateFileTxn.jar");
+
+            // Normally:
+            /*
+            fetch(API_BASE + "/schedule", {
+                method: 'POST',
+                body: formData
+            }).then(res => res.json()).then(data => {
+                alert("Job ID: " + data.jobId);
+                refreshJobTable();
+            });
+            */
+        }
+
+        function viewLog(jobId) {
+            alert("Viewing logs for Job ID: " + jobId);
+        }
+
+        function refreshJobTable() {
+            // Fetch from API_BASE + "/status"
+            console.log("Refreshing job table...");
+        }
+    </script>
+
+</body>
+
+</html>
