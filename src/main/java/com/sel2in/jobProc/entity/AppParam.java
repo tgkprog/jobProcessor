@@ -8,15 +8,22 @@ import java.time.LocalDateTime;
 @Table(name = "AppParams")
 @Data
 public class AppParam {
+    
     @Id
     @Column(name = "param_name")
-    private String paramName;
+    private String name;
 
     @Column(name = "param_value")
-    private String paramValue;
+    private String value;
 
     private String description;
 
     @Column(name = "updated_ts")
     private LocalDateTime updatedTs;
+
+    @PrePersist
+    @PreUpdate
+    protected void onUpdate() {
+        updatedTs = LocalDateTime.now();
+    }
 }

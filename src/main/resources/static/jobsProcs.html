@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Job Processor Control Panel</title>
+    <style>
+        body {
+            font-family: Arial;
+            background-color: #f4f6f8;
+            margin: 20px;
+        }
+
+        h1 {
+            color: #0b5394;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            background: white;
+        }
+
+        th,
+        td {
+            padding: 10px;
+            border: 1px solid #ccc;
+        }
+
+        th {
+            background: #0b5394;
+            color: white;
+        }
+
+        button {
+            padding: 5px 10px;
+            margin: 2px;
+            cursor: pointer;
+        }
+
+        input {
+            padding: 5px;
+            margin: 5px;
+            width: 300px;
+        }
+
+        .section {
+            background: white;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div style="margin-bottom: 20px;">
+        <a href="jobs.html" style="margin-right: 15px; text-decoration: none; color: #0b5394; font-weight: bold;">Jobs
+            Tracking</a>
+        <a href="jobsProcs.html"
+            style="margin-right: 15px; text-decoration: none; color: #0b5394; font-weight: bold;">Manage Processors</a>
+    </div>
+
+    <h1>Job Processor Control Panel</h1>
+
+    <div class="section">
+        <h2>Add / Update Job Processor</h2>
+        Class Name: <input type="text" id="className">
+        Jar Path: <input type="text" id="jarPath">
+        <button onclick="addOrUpdate()">Save</button>
+    </div>
+
+    <div class="section">
+        <h2>Job Processor List</h2>
+        <table id="jobTable">
+            <thead>
+                <tr>
+                    <th>Class Name</th>
+                    <th>Jar Path</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const API_BASE = "/api/job";
+
+        function loadJobs() {
+            fetch(API_BASE + "/listAll")
+                .then(res => res.json())
+                .then(data => {
+                    let table = document.querySelector("#jobTable tbody");
+                    table.innerHTML = "";
+                    data.forEach(job => {
+                        let row = table.insertRow();
+                        row.insertCell(0).innerText = job.className;
+                        row.insertCell(1).innerText = job.jarPath;
+
+                        let actions = row.insertCell(2);
+                        actions.innerHTML = `
+                            <button onclick="editJob('${job.className}','${job.jarPath}')">Edit</button>
+                            <button onclick="scheduleJob('${job.className}')">Schedule</button>
+                            <button onclick="deleteJob('${job.className}')">Delete</button>
+                        `;
+                    });
+                });
+        }
+
+        function addOrUpdate() {
+            let className = document.getElementById("className").value;
+            let jarPath = document.getElementById("jarPath").value;
+
+            fetch(API_BASE + "/add", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    className: className,
+                    jarPath: jarPath
+                })
+            })
+                .then(res => res.text())
+                .then(msg => {
+                    alert(msg);
+                    loadJobs();
+                });
+        }
+
+        function editJob(className, jarPath) {
+            document.getElementById("className").value = className;
+            document.getElementById("jarPath").value = jarPath;
+        }
+
+        function scheduleJob(className) {
+            window.location.href = `jobs.html?processor=${className}`;
+        }
+
+        function deleteJob(className) {
+            if (!confirm("Delete processor?")) return;
+            fetch(API_BASE + "/remove/" + className, { method: "DELETE" })
+                .then(res => res.text())
+                .then(msg => {
+                    alert(msg);
+                    loadJobs();
+                });
+        }
+
+        loadJobs();
+    </script>
+</body>
+
+</html>

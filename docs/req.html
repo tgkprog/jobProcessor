@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Job Engine and Job Processor Requirements</title>
@@ -11,328 +12,356 @@
             background-color: #f4f6f8;
             color: #222;
         }
-        h1, h2, h3 {
+
+        h1,
+        h2,
+        h3 {
             color: #0b5394;
         }
+
         code {
             background: #eee;
             padding: 2px 6px;
             border-radius: 4px;
         }
+
         table {
             border-collapse: collapse;
             width: 100%;
             margin-bottom: 20px;
             background: white;
         }
-        table, th, td {
+
+        table,
+        th,
+        td {
             border: 1px solid #ccc;
         }
+
         th {
             background: #0b5394;
             color: white;
         }
-        th, td {
+
+        th,
+        td {
             padding: 8px;
             text-align: left;
         }
+
         section {
             background: white;
             padding: 20px;
             margin-bottom: 20px;
             border-radius: 6px;
-            box-shadow: 0px 0px 4px rgba(0,0,0,0.1);
+            box-shadow: 0px 0px 4px rgba(0, 0, 0, 0.1);
         }
     </style>
 </head>
+
 <body>
 
-<h1>Job Engine and Job Processor Requirements</h1>
+    <h1>Job Engine and Job Processor Requirements</h1>
 
-<section>
-<h2>1. Technical Stack</h2>
-<ul>
-<li>Java 11</li>
-<li>Spring Boot (compatible with Java 11, e.g., Spring Boot 2.7.x)</li>
-<li>Maven</li>
-<li>Spring Batch</li>
-<li>Spring Scheduler / Cron Support</li>
-<li>Embedded HTML pages served by same service</li>
-</ul>
-</section>
+    <section>
+        <h2>1. Technical Stack</h2>
+        <ul>
+            <li>Java 11</li>
+            <li>Spring Boot (compatible with Java 11, e.g., Spring Boot 2.7.x)</li>
+            <li>Maven</li>
+            <li>Spring Batch</li>
+            <li>Spring Scheduler / Cron Support</li>
+            <li>Embedded HTML pages served by same service</li>
+        </ul>
+    </section>
 
-<section>
-<h2>2. Architecture Overview</h2>
+    <section>
+        <h2>2. Architecture Overview</h2>
 
-<h3>Main Components</h3>
-<ul>
-<li>Job Engine</li>
-<li>Job Processor(s)</li>
-<li>Job Controller</li>
-<li>Thread Pool Executor</li>
-<li>Management Controller</li>
-</ul>
+        <h3>Main Components</h3>
+        <ul>
+            <li>Job Engine</li>
+            <li>Job Processor(s)</li>
+            <li>Job Controller</li>
+            <li>Thread Pool Executor</li>
+            <li>Management Controller</li>
+        </ul>
 
-<h3>Key Concepts</h3>
-<ul>
-<li>Job processors are external JAR files</li>
-<li>Loaded dynamically at startup or runtime</li>
-<li>Configurable via YAML and Controller</li>
-</ul>
+        <h3>Key Concepts</h3>
+        <ul>
+            <li>Job processors are external JAR files</li>
+            <li>Loaded dynamically at startup or runtime</li>
+            <li>Configurable via YAML and Controller</li>
+        </ul>
 
-</section>
+    </section>
 
-<section>
-<h2>3. Job Processor Interface</h2>
+    <section>
+        <h2>3. Job Processor Interface</h2>
 
-<h3>Method 1: acceptJob</h3>
+        <h3>Method 1: reviewJob</h3>
 
-<pre>
-JobEstimate acceptJob(InputData inputData)
+        <pre>
+JobEstimate reviewJob(InputData inputData)
 </pre>
 
-Responsibilities:
+        Responsibilities:
 
-<ul>
-<li>Accept InputData</li>
-<li>Analyze input</li>
-<li>Estimate max processing time</li>
-<li>Return JobEstimate object</li>
-</ul>
+        <ul>
+            <li>Accept InputData</li>
+            <li>Analyze input (dates, parameters, file existence)</li>
+            <li>Estimate max processing time</li>
+            <li>Return JobEstimate object</li>
+        </ul>
 
 
-<h3>Method 2: processJob</h3>
+        <h3>Method 2: processJob</h3>
 
-<pre>
+        <pre>
 OutputData processJob(InputData inputData)
 </pre>
 
-Responsibilities:
+        Responsibilities:
 
-<ul>
-<li>Perform actual job processing</li>
-<li>Return OutputData</li>
-</ul>
+        <ul>
+            <li>Perform actual job processing</li>
+            <li>Return OutputData</li>
+        </ul>
 
-</section>
+    </section>
 
-<section>
+    <section>
 
-<h2>4. JobEstimate Structure</h2>
+        <h2>4. JobEstimate Structure</h2>
 
-<table>
-<tr><th>Field</th><th>Description</th></tr>
-<tr><td>maxTimeToProcess</td><td>Estimated max time required</td></tr>
-</table>
+        <table>
+            <tr>
+                <th>Field</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>maxTimeToProcess</td>
+                <td>Estimated max time required</td>
+            </tr>
+        </table>
 
-</section>
+    </section>
 
-<section>
+    <section>
 
-<h2>5. InputData Structure</h2>
+        <h2>5. InputData Structure</h2>
 
-<table>
-<tr><th>Field</th><th>Description</th></tr>
+        <table>
+            <tr>
+                <th>Field</th>
+                <th>Description</th>
+            </tr>
 
-<tr>
-<td>inputDataId</td>
-<td>ID of input record</td>
-</tr>
+            <tr>
+                <td>inputDataId</td>
+                <td>ID of input record</td>
+            </tr>
 
-<tr>
-<td>jobName</td>
-<td>Name of job</td>
-</tr>
+            <tr>
+                <td>jobName</td>
+                <td>Name of job</td>
+            </tr>
 
-<tr>
-<td>processorClassName</td>
-<td>Fully qualified class name</td>
-</tr>
+            <tr>
+                <td>processorClassName</td>
+                <td>Fully qualified class name</td>
+            </tr>
 
-<tr>
-<td>comment</td>
-<td>User comment</td>
-</tr>
+            <tr>
+                <td>comment</td>
+                <td>User comment</td>
+            </tr>
 
-<tr>
-<td>notes</td>
-<td>Notes</td>
-</tr>
+            <tr>
+                <td>notes</td>
+                <td>Notes</td>
+            </tr>
 
-<tr>
-<td>parameters</td>
-<td>Map of parameters (String, Number, Date, Object)</td>
-</tr>
+            <tr>
+                <td>parameters</td>
+                <td>Map of parameters (String, Number, Date, Object)</td>
+            </tr>
 
-<tr>
-<td>inputFiles</td>
-<td>List of input files</td>
-</tr>
+            <tr>
+                <td>inputFiles</td>
+                <td>List of input files</td>
+            </tr>
 
-<tr>
-<td>jobSubmittedDateTime</td>
-<td>Date</td>
-</tr>
+            <tr>
+                <td>jobSubmittedDateTime</td>
+                <td>Date</td>
+            </tr>
 
-<tr>
-<td>jobSubmittedTime</td>
-<td>Time</td>
-</tr>
+            <tr>
+                <td>jobSubmittedTime</td>
+                <td>Time</td>
+            </tr>
 
-<tr>
-<td>jobSubmittedTimeZone</td>
-<td>TimeZone</td>
-</tr>
+            <tr>
+                <td>jobSubmittedTimeZone</td>
+                <td>TimeZone</td>
+            </tr>
 
-</table>
+        </table>
 
-</section>
+    </section>
 
-<section>
+    <section>
 
-<h2>6. OutputData Structure</h2>
+        <h2>6. OutputData Structure</h2>
 
-Includes all InputData plus:
+        Includes all InputData plus:
 
-<table>
+        <table>
 
-<tr><th>Field</th><th>Description</th></tr>
+            <tr>
+                <th>Field</th>
+                <th>Description</th>
+            </tr>
 
-<tr>
-<td>jobId</td>
-<td>Generated Job ID</td>
-</tr>
+            <tr>
+                <td>jobId</td>
+                <td>Generated Job ID</td>
+            </tr>
 
-<tr>
-<td>inputDataId</td>
-<td>Link to input</td>
-</tr>
+            <tr>
+                <td>inputDataId</td>
+                <td>Link to input</td>
+            </tr>
 
-<tr>
-<td>outputCommand</td>
-<td>Output command</td>
-</tr>
+            <tr>
+                <td>outputCommand</td>
+                <td>Output command</td>
+            </tr>
 
-<tr>
-<td>outputNote</td>
-<td>Output note</td>
-</tr>
+            <tr>
+                <td>outputNote</td>
+                <td>Output note</td>
+            </tr>
 
-<tr>
-<td>outputParameters</td>
-<td>Output parameters map</td>
-</tr>
+            <tr>
+                <td>outputParameters</td>
+                <td>Output parameters map</td>
+            </tr>
 
-<tr>
-<td>outputFiles</td>
-<td>Output file list</td>
-</tr>
+            <tr>
+                <td>outputFiles</td>
+                <td>Output file list</td>
+            </tr>
 
-<tr>
-<td>jobSubmittedDateTime</td>
-<td>Copied from Input</td>
-</tr>
+            <tr>
+                <td>jobSubmittedDateTime</td>
+                <td>Copied from Input</td>
+            </tr>
 
-<tr>
-<td>jobStartDateTime</td>
-<td>Job start date time</td>
-</tr>
+            <tr>
+                <td>jobStartDateTime</td>
+                <td>Job start date time</td>
+            </tr>
 
-<tr>
-<td>jobEndDateTime</td>
-<td>Job end date time</td>
-</tr>
+            <tr>
+                <td>jobEndDateTime</td>
+                <td>Job end date time</td>
+            </tr>
 
-<tr>
-<td>jobStartTimeZone</td>
-<td>Timezone</td>
-</tr>
+            <tr>
+                <td>jobStartTimeZone</td>
+                <td>Timezone</td>
+            </tr>
 
-<tr>
-<td>jobEndTimeZone</td>
-<td>Timezone</td>
-</tr>
+            <tr>
+                <td>jobEndTimeZone</td>
+                <td>Timezone</td>
+            </tr>
 
-<tr>
-<td>mainErrorReason</td>
-<td>Main error</td>
-</tr>
+            <tr>
+                <td>mainErrorReason</td>
+                <td>Main error</td>
+            </tr>
 
-<tr>
-<td>errors</td>
-<td>List of error objects</td>
-</tr>
+            <tr>
+                <td>errors</td>
+                <td>List of error objects</td>
+            </tr>
 
-<tr>
-<td>status</td>
-<td>SUCCESS / FAILED / TIMED OUT</td>
-</tr>
+            <tr>
+                <td>status</td>
+                <td>SUCCESS / FAILED / TIMED OUT</td>
+            </tr>
 
-</table>
+        </table>
 
-</section>
+    </section>
 
-<section>
+    <section>
 
-<h2>7. Error Object</h2>
+        <h2>7. Error Object</h2>
 
-<table>
+        <table>
 
-<tr><th>Field</th><th>Description</th></tr>
+            <tr>
+                <th>Field</th>
+                <th>Description</th>
+            </tr>
 
-<tr>
-<td>errorId</td>
-<td>Error ID</td>
-</tr>
+            <tr>
+                <td>errorId</td>
+                <td>Error ID</td>
+            </tr>
 
-<tr>
-<td>reasonCode</td>
-<td>Error code</td>
-</tr>
+            <tr>
+                <td>reasonCode</td>
+                <td>Error code</td>
+            </tr>
 
-<tr>
-<td>reasonString</td>
-<td>Error message</td>
-</tr>
+            <tr>
+                <td>reasonString</td>
+                <td>Error message</td>
+            </tr>
 
-</table>
+        </table>
 
-</section>
+    </section>
 
-<section>
+    <section>
 
-<h2>8. Thread Pool Management</h2>
+        <h2>8. Thread Pool Management</h2>
 
-Configured via YAML:
+        Configured via YAML:
 
-<pre>
+        <pre>
 jobEngine:
   threadPoolSize: 10
 </pre>
 
-Controller Features:
+        Controller Features:
 
-<ul>
+        <ul>
 
-<li>Change thread pool size</li>
+            <li>Change thread pool size</li>
 
-<li>View running jobs</li>
+            <li>View running jobs</li>
 
-<li>Cancel specific job</li>
+            <li>Cancel specific job</li>
 
-<li>Cancel all jobs</li>
+            <li>Cancel all jobs</li>
 
-</ul>
+        </ul>
 
-</section>
+    </section>
 
-<section>
+    <section>
 
-<h2>9. Job Processor Management</h2>
+        <h2>9. Job Processor Management</h2>
 
-Defined in YAML:
+        Defined in YAML:
 
-<pre>
+        <pre>
 
 jobProcessors:
 
@@ -344,127 +373,128 @@ jobProcessors:
 
 </pre>
 
-Runtime Controller Operations:
+        Runtime Controller Operations:
 
-<ul>
+        <ul>
 
-<li>List Job Processors</li>
+            <li>List Job Processors</li>
 
-<li>Add Job Processor</li>
+            <li>Add Job Processor</li>
 
-<li>Remove Job Processor</li>
+            <li>Remove Job Processor</li>
 
-<li>Reload Job Processor</li>
+            <li>Reload Job Processor</li>
 
-<li>Add instances</li>
+            <li>Add instances</li>
 
-</ul>
+        </ul>
 
-Constraints:
+        Constraints:
 
-<ul>
+        <ul>
 
-<li>Each instance handles only ONE job at a time</li>
+            <li>Each instance handles only ONE job at a time</li>
 
-<li>Max concurrent jobs = min(thread pool, processor instances)</li>
+            <li>Max concurrent jobs = min(thread pool, processor instances)</li>
 
-</ul>
+        </ul>
 
-</section>
+    </section>
 
-<section>
+    <section>
 
-<h2>10. Job Timeout Handling</h2>
+        <h2>10. Job Timeout Handling</h2>
 
-Rules:
+        Rules:
 
-<ul>
+        <ul>
 
-<li>Job processor provides maxTimeToProcess</li>
+            <li>Job processor provides maxTimeToProcess</li>
 
-<li>Job Engine monitors execution time</li>
+            <li>Job Engine monitors execution time</li>
 
-<li>If execution time exceeds 150% of maxTimeToProcess</li>
+            <li>If execution time exceeds 150% of maxTimeToProcess</li>
 
-<li>Job Engine interrupts job</li>
+            <li>Job Engine interrupts job</li>
 
-<li>Status set to TIMED OUT</li>
+            <li>Status set to TIMED OUT</li>
 
-<li>Error recorded</li>
+            <li>Error recorded</li>
 
-</ul>
+        </ul>
 
-</section>
+    </section>
 
-<section>
+    <section>
 
-<h2>11. Dynamic Job Processor Loading</h2>
+        <h2>11. Dynamic Job Processor Loading</h2>
 
-Supported:
+        Supported:
 
-<ul>
+        <ul>
 
-<li>Load from external JAR</li>
+            <li>Load from external JAR</li>
 
-<li>Load at startup</li>
+            <li>Load at startup</li>
 
-<li>Load at runtime</li>
+            <li>Load at runtime</li>
 
-<li>Reload same processor</li>
+            <li>Reload same processor</li>
 
-</ul>
+        </ul>
 
-</section>
+    </section>
 
-<section>
+    <section>
 
-<h2>12. Embedded HTML UI</h2>
+        <h2>12. Embedded HTML UI</h2>
 
-Supports:
+        Supports:
 
-<ul>
+        <ul>
 
-<li>View job status</li>
+            <li>View job status</li>
 
-<li>View job processors</li>
+            <li>View job processors</li>
 
-<li>Manage processors</li>
+            <li>Manage processors</li>
 
-<li>Manage thread pool</li>
+            <li>Manage thread pool</li>
 
-<li>View errors</li>
+            <li>View errors</li>
 
-</ul>
+        </ul>
 
-</section>
+    </section>
 
-<section>
+    <section>
 
-<h2>13. Job Lifecycle</h2>
+        <h2>13. Job Lifecycle</h2>
 
-Flow:
+        Flow:
 
-<ol>
+        <ol>
 
-<li>User submits InputData</li>
+            <li>User submits InputData (via REST API)</li>
 
-<li>Job Engine calls acceptJob()</li>
+            <li>Job Engine calls reviewJob()</li>
 
-<li>Estimate stored</li>
+            <li>Estimate stored & timeout calculated (150%)</li>
 
-<li>Job scheduled</li>
+            <li>Job scheduled in Thread Pool</li>
 
-<li>processJob() called</li>
+            <li>processJob() called asynchronously</li>
 
-<li>Job monitored</li>
+            <li>Job monitored for completion or timeout</li>
 
-<li>Completed OR Failed OR Timed Out</li>
+            <li>Completed OR Failed OR Timed Out</li>
 
-<li>OutputData stored</li>
+            <li>OutputData persists to DB</li>
 
-</ol>
+        </ol>
 
-</section>
+    </section>
 
 </body>
+
 </html>

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Job Management - Job Processor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f8;
+            margin: 20px;
+            color: #333;
+        }
+
+        h1,
+        h2 {
+            color: #0b5394;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: auto;
+        }
+
+        .section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 10px;
+            background: white;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        th {
+            background-color: #0b5394;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="text"],
+        input[type="date"],
+        input[type="datetime-local"],
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #0b5394;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #083e70;
+        }
+
+        .nav {
+            margin-bottom: 20px;
+        }
+
+        .nav a {
+            margin-right: 15px;
+            text-decoration: none;
+            color: #0b5394;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="nav">
+            <a href="jobs.html">Jobs Tracking</a>
+            <a href="jobsProcs.html">Manage Processors</a>
+        </div>
+
+        <h1>Job Tracking & Scheduling</h1>
+
+        <div class="section">
+            <h2>Schedule New Job</h2>
+            <form id="scheduleJobForm">
+                <div class="form-group">
+                    <label for="processorClassName">Processor Class</label>
+                    <input type="text" id="processorClassName" name="processorClassName" required>
+                </div>
+                <div class="form-group">
+                    <label for="jobName">Job Name</label>
+                    <input type="text" id="jobName" name="jobName" placeholder="e.g., Daily Cleanup" required>
+                </div>
+                <div class="form-group">
+                    <label for="comment">Comment</label>
+                    <input type="text" id="comment" name="comment">
+                </div>
+                <button type="button" onclick="submitJob()">Schedule Job</button>
+            </form>
+        </div>
+
+        <div class="section">
+            <h2>Recent Jobs</h2>
+            <table id="jobsStatusTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Processor</th>
+                        <th>Submitted</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = "/api/job";
+
+        window.onload = function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            const processor = urlParams.get('processor');
+            if (processor) {
+                document.getElementById('processorClassName').value = processor;
+                document.getElementById('jobName').value = "Run " + processor.split('.').pop();
+            }
+            refreshJobTable();
+        };
+
+        function submitJob() {
+            const form = document.getElementById('scheduleJobForm');
+            const params = new URLSearchParams(new FormData(form));
+
+            fetch(API_BASE + "/schedule?" + params.toString(), {
+                method: 'POST'
+            }).then(res => res.json()).then(data => {
+                alert("Job Scheduled! ID: " + data.id);
+                refreshJobTable();
+            }).catch(err => alert("Error scheduling job. Ensure backend is running."));
+        }
+
+        function refreshJobTable() {
+            fetch(API_BASE + "/status")
+                .then(res => res.json())
+                .then(data => {
+                    const tbody = document.querySelector("#jobsStatusTable tbody");
+                    tbody.innerHTML = "";
+                    data.forEach(job => {
+                        const row = tbody.insertRow();
+                        row.insertCell(0).innerText = job.id;
+                        row.insertCell(1).innerText = job.jobName;
+                        row.insertCell(2).innerText = job.processorClassName;
+                        row.insertCell(3).innerText = job.jobSubmittedDateTime;
+                        row.insertCell(4).innerText = job.status;
+                    });
+                });
+        }
+
+        setInterval(refreshJobTable, 5000); // Auto refresh every 5s
+    </script>
+
+</body>
+
+</html>

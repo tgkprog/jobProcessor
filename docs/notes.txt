@@ -84,11 +84,11 @@ Restart safe
                    |
      -------------------------------
      |                             |
-JobProcessor                 ThreadPool
+ProcessorDefinition          ThreadPool
      |
-JobProcessorInstances
+JobProcessor (Interface)
      |
-InputData
+JobRecord (InputData)
      |
 InputDataParam
      |
@@ -104,17 +104,11 @@ JobError
 
 TODO:
 
-Full working:
-
-Spring Boot Entities
-
-JPA repositories
-
-Dynamic class loader
-
-Thread pool engine
-
-REST controllers
+[x] Spring Boot Entities (Core)
+[x] JPA repositories (Core)
+[x] Dynamic class loader (ProcessorLoader)
+[x] Thread pool engine (JobEngine)
+[x] REST controllers (Processor & Job)
 
 
 see design for html

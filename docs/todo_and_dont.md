@@ -3,24 +3,27 @@
 ## 📋 TODO (Core Implementation Path)
 
 ### 1. Database & Persistence (JPA)
-- [ ] Implement all Entities: `InputData`, `InputDataParam`, `InputDataFile`, `OutputData`, `OutputDataParam`, `OutputDataFile`, `JobError`.
-- [ ] Create Repositories for all entities.
-- [ ] Implement `AppParamsService` to prioritize DB values over `application.yaml`.
+- [x] Implement core Entities: `ProcessorDefinition`, `AppParam`, `JobRecord`.
+- [ ] Implement support Entities: `InputDataParam`, `OutputDataParam`, `JobError`.
+- [x] Create Repositories for core entities.
+- [ ] Implement `AppParams` logic in `JobEngine` to prioritize DB values over `application.yaml`.
 
 ### 2. Job Engine Enhancements
-- [ ] Implement proper thread pool resizing logic (handling shutdown/migration of running tasks).
-- [ ] Add `JobTracker` to monitor currently running jobs in memory (for UI view).
-- [ ] Implement `Cancel Job` logic using `Future.cancel(true)`.
+- [x] Basic thread pool execution with `CompletableFuture`.
+- [ ] Implement proper thread pool resizing logic (graceful shutdown of active tasks).
+- [ ] Implement `JobTracker` in-memory store for real-time monitoring of active threads.
+- [ ] Implement `Cancel Job` logic using task interruption.
 
-### 3. Dynamic Loading Safety
-- [ ] Use separate `ClassLoader` for each processor version to allow hot-reloading.
-- [ ] Validate JAR integrity and class signature before instantiation.
-- [ ] Implement a `Sandbox` environment or Security Manager for untrusted JARs.
+### 3. Dynamic Loading & Safety
+- [x] Functional `ProcessorLoader` with `URLClassLoader` and caching.
+- [ ] Implement `evictCache` logic when a JAR is re-uploaded or removed.
+- [ ] Add JAR hashing/checksum validation before loading.
 
-### 4. REST APIs
-- [ ] Implement `/api/job/schedule` to consume `FormData` (files + params).
-- [ ] Implement `/api/appParam` for runtime configuration.
-- [ ] Add pagination to `/api/job/status` for performance.
+### 4. REST APIs & UI
+- [x] Implement `/api/job/listAll`, `add`, `remove`.
+- [x] Implement `/api/job/schedule` (basic) and `/api/job/status`.
+- [x] Implement Admin UI (`jobs.html`, `jobsProcs.html`) using real API calls.
+- [ ] Implement Multipart file upload for JARs and Input Files.
 
 ---
 
@@ -28,7 +31,7 @@
 
 ### 1. Architecturally
 - **Don't** hardcode JAR paths. Always resolve via base directory from config or DB.
-- **Don't** use the same instance of `IJobProcessor` for multiple concurrent jobs if state is maintained. (Factory pattern or new instance per job).
+- **Don't** use the same instance of `JobProcessor` for multiple concurrent jobs if state is maintained. (Factory pattern or new instance per job).
 - **Don't** let Job Processors write directly to the root DB. They should return `OutputData` and let the Engine handle persistence.
 
 ### 2. Performance
