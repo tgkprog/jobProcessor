@@ -9,11 +9,7 @@ JAR_FAT="target/jobProc-1.0.0-fat.jar"
 JAR_SLIM="target/jobProc-1.0.0.jar"
 MAIN_CLASS="com.sel2in.jobProc.JobProcApp"
 
-# Ensure resources directory exists
-mkdir -p src/main/resources
 
-# Requirement: on every run set the verDate.txt with current date, time and time zone
-date +"%Y-%m-%d %H:%M:%S %Z" > "$VER_DATE"
 
 usage() {
     echo "Usage: ./build [params]"
@@ -70,6 +66,14 @@ update_version() {
     echo "Updated version in $APP_PROPS to: $new_ver"
 }
 
+prepare_resources() {
+    # Ensure resources directory exists
+    mkdir -p src/main/resources
+    # Requirement: set the verDate.txt with current date, time and time zone
+    date +"%Y-%m-%d %H:%M:%S %Z" > "$VER_DATE"
+    echo "Updated $VER_DATE"
+}
+
 if [ $# -eq 0 ]; then
     usage
     exit 0
@@ -78,10 +82,12 @@ fi
 for arg in "$@"; do
     case $arg in
         c)
+            prepare_resources
             echo "Running mvn clean..."
             mvn clean
             ;;
         p)
+            prepare_resources
             echo "Running mvn install..."
             mvn install
             ;;
@@ -102,8 +108,13 @@ for arg in "$@"; do
             fi
             ;;
         ver)
-            echo "Project Version: $(get_version)"
             usage
+            if [ -f "$VER_DATE" ]; then
+                echo "Last Build: $(cat "$VER_DATE")"
+            else
+                echo "Last Build: No build record found."
+            fi
+            echo "Project Version: $(get_version)"
             exit 0
             ;;
         ver1)
