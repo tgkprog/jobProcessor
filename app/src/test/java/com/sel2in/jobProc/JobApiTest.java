@@ -18,8 +18,11 @@ import static org.junit.jupiter.api.Assertions.*;
  * Uses a real H2 in-memory database (create-drop per run).
  * Starts a real embedded server on a random port.
  * Tests are ordered to simulate a real user workflow.
+ * 
+ * Jobs have a minimum 30s delay before execution, so during
+ * these tests all scheduled jobs remain in SCHEDULED status.
  *
- * Run with: mvn test
+ * Run with: cd app && mvn test
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -123,7 +126,7 @@ public class JobApiTest {
 
     @Test
     @Order(11)
-    @DisplayName("POST /api/job/schedule - schedule a job")
+    @DisplayName("POST /api/job/schedule - schedule a job (stays SCHEDULED due to 30s min delay)")
     void scheduleJob() {
         String scheduleUrl = url("/api/job/schedule?jobName=AuditQ1&processorClassName=com.sel2in.jobProc.processors.DateFileTxn&comment=Test+job");
         ResponseEntity<Map> resp = rest.postForEntity(scheduleUrl, null, Map.class);
@@ -132,9 +135,10 @@ public class JobApiTest {
         Map body = resp.getBody();
         assertNotNull(body.get("id"));
         assertEquals("AuditQ1", body.get("jobName"));
-        assertEquals("SCHEDULED", body.get("status"));
+        assertEquals("SCHEDULED", body.get("status"), "Job should be SCHEDULED (30s min delay)");
         assertEquals("com.sel2in.jobProc.processors.DateFileTxn", body.get("processorClassName"));
         assertNotNull(body.get("jobSubmittedDateTime"));
+        assertNotNull(body.get("scheduledRunTime"), "scheduledRunTime should be set");
     }
 
     @Test
@@ -159,16 +163,27 @@ public class JobApiTest {
 
     @Test
     @Order(14)
-    @DisplayName("Verify job fields persisted correctly")
+    @DisplayName("Verify job fields persisted correctly — all SCHEDULED (not yet triggered)")
     void jobFields() {
         ResponseEntity<List> resp = rest.getForEntity(url("/api/job/status"), List.class);
         Map job1 = (Map) resp.getBody().get(0);
 
         assertEquals("AuditQ1", job1.get("jobName"));
         assertEquals("Test job", job1.get("comment"));
-        assertEquals("SCHEDULED", job1.get("status"));
+        assertEquals("SCHEDULED", job1.get("status"), "Should still be SCHEDULED (30s min delay)");
         assertNotNull(job1.get("id"));
         assertNotNull(job1.get("createdTs"));
+        assertNotNull(job1.get("scheduledRunTime"));
+    }
+
+    @Test
+    @Order(15)
+    @DisplayName("GET /api/job/run - manual trigger runs job immediately")
+    void manualRun() {
+        ResponseEntity<String> resp = rest.getForEntity(
+                url("/api/job/run?jobId=1"), String.class);
+        assertEquals(HttpStatus.OK, resp.getStatusCode());
+        assertTrue(resp.getBody().contains("triggered"));
     }
 
     // ============================
@@ -197,9 +212,7 @@ public class JobApiTest {
     @Order(22)
     @DisplayName("GET /h2 - H2 console available")
     void h2Console() {
-        // In test config h2 console is disabled, so this just verifies no crash
         ResponseEntity<String> resp = rest.getForEntity(url("/h2"), String.class);
-        // May be 404 since disabled in test, that's fine
         assertNotNull(resp);
     }
 }
