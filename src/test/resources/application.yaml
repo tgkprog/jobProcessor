@@ -1,0 +1,27 @@
+# Test-specific config: uses in-memory H2 so each test run starts fresh
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+  h2:
+    console:
+      enabled: false
+  batch:
+    job:
+      enabled: false
+  thymeleaf:
+    check-template-location: false
+
+server:
+  port: 0
+
+jobproc:
+  dbReset: false
+  defaultNumberOfThreads: 2
