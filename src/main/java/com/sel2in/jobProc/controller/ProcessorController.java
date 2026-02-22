@@ -21,8 +21,8 @@ public class ProcessorController {
 
     @PostMapping("/add")
     public String add(@RequestBody ProcessorDefinition definition) {
-        processorRepository.findByClassName(definition.getClassName()).ifPresent(p -> {
-            definition.onCreate(); // preserve createdTs if updating
+        processorRepository.findByClassName(definition.getClassName()).ifPresent(existing -> {
+            definition.setCreatedTs(existing.getCreatedTs());
         });
         processorRepository.save(definition);
         return "Processor saved successfully";
