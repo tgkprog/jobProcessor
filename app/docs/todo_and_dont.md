@@ -4,51 +4,66 @@
 
 ### Core Infrastructure
 - [x] Spring Boot app with H2 embedded database (`ddl-auto: update`)
-- [x] Pre-Spring bootstrap: auto-creates working directories (`data/`, `processors/`, `inputFiles/`, `outputFiles/`)
+- [x] Pre-Spring bootstrap: auto-creates working directories
 - [x] `DataSeeder`: auto-populates `AppParams` on first run
 - [x] `JobProcessor` interface (`reviewJob`, `processJob`)
-- [x] `ProcessorLoader`: dynamic JAR loading with `URLClassLoader` + cache
-- [x] `JobEngine`: thread pool execution with timeout (150% of estimate)
-- [x] JPA Entities: `AppParam`, `ProcessorDefinition`, `JobRecord`
-- [x] Repositories: `AppParamRepository`, `ProcessorRepository`, `JobRepository`
-- [x] REST Controllers: `ProcessorController`, `JobController`
-- [x] Admin UI: `jobs.html`, `jobsProcs.html` with real API calls
+- [x] `ProcessorLoader`: dynamic JAR loading with `URLClassLoader` + cache + `evictCache`
+- [x] `JobEngine`: thread pool loaded from `AppParams` DB, runtime resizing, job tracking, cancel
 - [x] H2 Web Console at `/h2`
 
-### Verified Working
-- [x] `GET /api/job/listAll` — list all registered processors
-- [x] `POST /api/job/add` — register a new processor
-- [x] `DELETE /api/job/remove/{className}` — remove a processor
-- [x] `POST /api/job/schedule` — schedule a job (persists to DB)
-- [x] `GET /api/job/status` — list all jobs with status
+### JPA Entities (all done)
+- [x] `AppParam`
+- [x] `ProcessorDefinition`
+- [x] `JobRecord` (InputData table) with `scheduledRunTime`
+- [x] `InputDataParam`
+- [x] `InputDataFile`
+- [x] `OutputDataRecord`
+- [x] `OutputDataParam`
+- [x] `OutputDataFile`
+- [x] `JobError`
+
+### Repositories
+- [x] `AppParamRepository`
+- [x] `ProcessorRepository`
+- [x] `JobRepository`
+
+### Scheduling (Quartz)
+- [x] `ScheduledJobTrigger`: Quartz Job fires at scheduled time
+- [x] `JobExecutionService`: loads job from DB, resolves JAR, runs via JobEngine, updates status
+- [x] Minimum 30s delay enforced (cron scheduler, not immediate)
+- [x] `GET /api/job/run?jobId=N` manual trigger endpoint
+
+### REST Controllers
+- [x] `ProcessorController`: CRUD processors
+- [x] `JobController`: schedule with delay, status, manual run
+- [x] `AdminController`: AppParams CRUD, engine status, thread pool resize, job cancel
+
+### Admin UI
+- [x] `jobs.html`: schedule with delay picker, job table, Run Now, auto-refresh 5s
+- [x] `jobsProcs.html`: processor management
+
+### Testing
+- [x] 15 JUnit integration tests (`src/test/java`) with real H2 in-memory DB
+- [x] `test.sh` shell-based smoke tests against running fat JAR
 
 ---
 
-## 📋 TODO
-
-### Database & Persistence
-- [ ] Implement remaining entities: `InputDataParam`, `InputDataFile`, `OutputDataParam`, `OutputDataFile`, `JobError`
-- [ ] Load `numberOfThreads` from `AppParams` DB at startup instead of hardcoding
-- [ ] Support `--dbReset` flag to wipe and re-seed DB
-
-### Job Engine
-- [ ] Implement proper thread pool resizing at runtime
-- [ ] `JobTracker`: in-memory map of active job futures for monitoring
-- [ ] Cancel job logic via `Future.cancel(true)`
-- [ ] Wire `executeAsync` to the `/api/job/schedule` endpoint (currently only persists record)
-- [ ] Record job start/end times and status changes in DB after execution
+## 📋 TODO (Future)
 
 ### Dynamic Loading
-- [ ] `evictCache` when a JAR is re-uploaded or deleted
+- [ ] Upload JAR via REST endpoint (multipart file upload)
 - [ ] JAR checksum validation before loading
-- [ ] Upload JAR via REST endpoint
 
 ### Admin UI
-- [ ] File upload support in `jobs.html` for input files
-- [ ] Live job status auto-refresh indicators
-- [ ] Job cancellation button
-- [ ] Thread pool size control panel
-- [ ] AppParams editor page
+- [ ] File upload in `jobs.html` for input files
+- [ ] Job cancellation button in UI
+- [ ] Thread pool / AppParams editor page in UI
+
+### Production
+- [ ] Support `--dbReset` flag to wipe and re-seed DB
+- [ ] MySQL/PostgreSQL datasource profile for production use
+- [ ] Security: authentication for admin APIs
+- [ ] `samples/` project: example JobProcessor implementations
 
 ---
 
@@ -56,13 +71,13 @@
 
 ### Architecture
 - **Don't** hardcode JAR paths. Resolve via DB or config.
-- **Don't** reuse a `JobProcessor` instance across concurrent jobs if it holds state. Create a new instance per job via `ProcessorLoader.load()`.
-- **Don't** let Job Processors write directly to the DB. They return `OutputData`; the Engine persists it.
+- **Don't** reuse a `JobProcessor` instance across concurrent jobs if it holds state.
+- **Don't** let Job Processors write directly to the DB. They return `OutputData`.
 
 ### Performance
 - **Don't** block the HTTP thread waiting for a job. Use `CompletableFuture`.
 - **Don't** keep unbounded logs in memory. Persist errors to `JobError` table.
-- **Don't** reload the same JAR ClassLoader unless explicitly requested.
+- **Don't** reload the same JAR ClassLoader unless `evictCache` is called.
 
 ### Security
 - **Don't** allow processors to call `System.exit()`.
