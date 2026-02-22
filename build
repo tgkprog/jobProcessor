@@ -12,17 +12,17 @@ MAIN_CLASS="com.sel2in.jobProc.JobProcApp"
 # Ensure resources directory exists
 mkdir -p src/main/resources
 
-# On every run: update verDate.txt with current date, time and time zone
+# Requirement: on every run set the verDate.txt with current date, time and time zone
 date +"%Y-%m-%d %H:%M:%S %Z" > "$VER_DATE"
 
 usage() {
-    echo "Usage: ./build.sh [params]"
+    echo "Usage: ./build [params]"
     echo "Params:"
     echo "  c    : mvn clean"
     echo "  p    : mvn install"
     echo "  rf   : run fat jar"
     echo "  rs   : run slim jar"
-    echo "  ver  : print version and usage, then exit"
+    echo "  ver  : print usage and version and exit"
     echo "  ver1 : increase patch version (x.y.Z)"
     echo "  ver2 : increase minor version (x.Y.z)"
     echo "  ver3 : increase major version (X.y.z)"
@@ -32,7 +32,7 @@ get_version() {
     if [ -f "$APP_PROPS" ]; then
         grep "app.version=" "$APP_PROPS" | cut -d'=' -f2
     else
-        echo "0.0.0"
+        echo "1.0.0"
     fi
 }
 
@@ -67,7 +67,7 @@ update_version() {
             echo "app.version=$new_ver" >> "$APP_PROPS"
         fi
     fi
-    echo "Updated version to: $new_ver"
+    echo "Updated version in $APP_PROPS to: $new_ver"
 }
 
 if [ $# -eq 0 ]; then
