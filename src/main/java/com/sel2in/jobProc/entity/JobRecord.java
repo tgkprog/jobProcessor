@@ -29,6 +29,10 @@ public class JobRecord {
     @Column(name = "job_submitted_timezone")
     private String jobSubmittedTimeZone;
 
+    /** Earliest time this job is allowed to run */
+    @Column(name = "scheduled_run_time")
+    private LocalDateTime scheduledRunTime;
+
     private String status = "PENDING";
 
     @Column(name = "job_start_datetime")

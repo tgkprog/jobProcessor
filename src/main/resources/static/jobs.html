@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Job Management - Job Processor</title>
+    <title>Job Tracking & Scheduling - Job Processor</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -64,14 +64,26 @@
         }
 
         input[type="text"],
-        input[type="date"],
-        input[type="datetime-local"],
+        input[type="number"],
         select {
             width: 100%;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 4px;
             box-sizing: border-box;
+        }
+
+        .delay-row {
+            display: flex;
+            gap: 15px;
+        }
+
+        .delay-row .form-group {
+            flex: 1;
+        }
+
+        .delay-row input {
+            width: 100%;
         }
 
         button {
@@ -87,6 +99,19 @@
             background-color: #083e70;
         }
 
+        .btn-small {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+
+        .btn-run {
+            background-color: #2e7d32;
+        }
+
+        .btn-run:hover {
+            background-color: #1b5e20;
+        }
+
         .nav {
             margin-bottom: 20px;
         }
@@ -96,6 +121,37 @@
             text-decoration: none;
             color: #0b5394;
             font-weight: bold;
+        }
+
+        .status-SCHEDULED {
+            color: #1565c0;
+            font-weight: bold;
+        }
+
+        .status-RUNNING {
+            color: #e65100;
+            font-weight: bold;
+        }
+
+        .status-SUCCESS {
+            color: #2e7d32;
+            font-weight: bold;
+        }
+
+        .status-FAILED {
+            color: #c62828;
+            font-weight: bold;
+        }
+
+        .status-TIMED_OUT {
+            color: #ad1457;
+            font-weight: bold;
+        }
+
+        .hint {
+            color: #888;
+            font-size: 12px;
+            margin-top: 3px;
         }
     </style>
 </head>
@@ -115,22 +171,41 @@
             <form id="scheduleJobForm">
                 <div class="form-group">
                     <label for="processorClassName">Processor Class</label>
-                    <input type="text" id="processorClassName" name="processorClassName" required>
+                    <input type="text" id="processorClassName" name="processorClassName"
+                        placeholder="e.g., com.sel2in.jobProc.processors.DateFileTxn" required>
                 </div>
                 <div class="form-group">
                     <label for="jobName">Job Name</label>
-                    <input type="text" id="jobName" name="jobName" placeholder="e.g., Daily Cleanup" required>
+                    <input type="text" id="jobName" name="jobName" placeholder="e.g., Monthly Audit" required>
                 </div>
                 <div class="form-group">
                     <label for="comment">Comment</label>
-                    <input type="text" id="comment" name="comment">
+                    <input type="text" id="comment" name="comment" placeholder="Optional notes">
                 </div>
+
+                <label>Earliest Run Time (delay from now)</label>
+                <div class="delay-row">
+                    <div class="form-group">
+                        <label for="delayDays">Days</label>
+                        <input type="number" id="delayDays" name="delayDays" value="0" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="delayHours">Hours</label>
+                        <input type="number" id="delayHours" name="delayHours" value="0" min="0" max="23">
+                    </div>
+                    <div class="form-group">
+                        <label for="delayMinutes">Minutes</label>
+                        <input type="number" id="delayMinutes" name="delayMinutes" value="0" min="0" max="59">
+                    </div>
+                </div>
+                <p class="hint">Set all to 0 to run as soon as possible.</p>
+
                 <button type="button" onclick="submitJob()">Schedule Job</button>
             </form>
         </div>
 
         <div class="section">
-            <h2>Recent Jobs</h2>
+            <h2>Jobs</h2>
             <table id="jobsStatusTable">
                 <thead>
                     <tr>
@@ -138,7 +213,11 @@
                         <th>Name</th>
                         <th>Processor</th>
                         <th>Submitted</th>
+                        <th>Scheduled For</th>
+                        <th>Started</th>
+                        <th>Ended</th>
                         <th>Status</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody></tbody>
@@ -160,15 +239,36 @@
         };
 
         function submitJob() {
-            const form = document.getElementById('scheduleJobForm');
-            const params = new URLSearchParams(new FormData(form));
+            const params = new URLSearchParams();
+            params.append('jobName', document.getElementById('jobName').value);
+            params.append('processorClassName', document.getElementById('processorClassName').value);
+            params.append('comment', document.getElementById('comment').value);
+            params.append('delayDays', document.getElementById('delayDays').value);
+            params.append('delayHours', document.getElementById('delayHours').value);
+            params.append('delayMinutes', document.getElementById('delayMinutes').value);
 
-            fetch(API_BASE + "/schedule?" + params.toString(), {
-                method: 'POST'
-            }).then(res => res.json()).then(data => {
-                alert("Job Scheduled! ID: " + data.id);
-                refreshJobTable();
-            }).catch(err => alert("Error scheduling job. Ensure backend is running."));
+            fetch(API_BASE + "/schedule?" + params.toString(), { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    alert("Job Scheduled!\nID: " + data.id + "\nRuns at: " + formatDateTime(data.scheduledRunTime));
+                    refreshJobTable();
+                    document.getElementById('scheduleJobForm').reset();
+                })
+                .catch(err => alert("Error scheduling job: " + err));
+        }
+
+        function runNow(jobId) {
+            fetch(API_BASE + "/run?jobId=" + jobId)
+                .then(res => res.text())
+                .then(msg => {
+                    alert(msg);
+                    setTimeout(refreshJobTable, 1000);
+                });
+        }
+
+        function formatDateTime(dt) {
+            if (!dt) return "-";
+            return dt.replace("T", " ").substring(0, 19);
         }
 
         function refreshJobTable() {
@@ -181,14 +281,24 @@
                         const row = tbody.insertRow();
                         row.insertCell(0).innerText = job.id;
                         row.insertCell(1).innerText = job.jobName;
-                        row.insertCell(2).innerText = job.processorClassName;
-                        row.insertCell(3).innerText = job.jobSubmittedDateTime;
-                        row.insertCell(4).innerText = job.status;
+                        row.insertCell(2).innerText = (job.processorClassName || "").split('.').pop();
+                        row.insertCell(3).innerText = formatDateTime(job.jobSubmittedDateTime);
+                        row.insertCell(4).innerText = formatDateTime(job.scheduledRunTime);
+                        row.insertCell(5).innerText = formatDateTime(job.jobStartDateTime);
+                        row.insertCell(6).innerText = formatDateTime(job.jobEndDateTime);
+
+                        const statusCell = row.insertCell(7);
+                        statusCell.innerHTML = '<span class="status-' + job.status + '">' + job.status + '</span>';
+
+                        const actionsCell = row.insertCell(8);
+                        if (job.status === 'SCHEDULED' || job.status === 'FAILED') {
+                            actionsCell.innerHTML = '<button class="btn-small btn-run" onclick="runNow(' + job.id + ')">Run Now</button>';
+                        }
                     });
                 });
         }
 
-        setInterval(refreshJobTable, 5000); // Auto refresh every 5s
+        setInterval(refreshJobTable, 5000);
     </script>
 
 </body>
