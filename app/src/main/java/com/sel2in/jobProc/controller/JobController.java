@@ -9,6 +9,10 @@ import com.sel2in.jobProc.service.ScheduledJobTrigger;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -30,16 +34,32 @@ public class JobController {
 
     /** Minimum delay before a job can run (seconds) */
     private static final long MIN_DELAY_SECONDS = 30;
-    private static final String INPUT_DIR = "./inputFiles";
 
     private final JobRepository jobRepository;
     private final InputDataFileRepository inputDataFileRepository;
     private final Scheduler quartzScheduler;
     private final JobExecutionService jobExecutionService;
+    private final com.sel2in.jobProc.service.JobEngine jobEngine;
+    
+    @org.springframework.beans.factory.annotation.Value("${jobproc.inputFileDirectory:./inputFiles}")
+    private String inputFileDirectory;
 
     @GetMapping("/status")
-    public List<JobRecord> getStatus() {
-        return jobRepository.findAll();
+    public List<JobRecord> getStatus(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size) {
+        // Input validation
+        if (page < 0) page = 0;
+        if (size < 1) size = 50;
+        if (size > 100) size = 100;
+        
+        if (page == 0 && size == 50) {
+            // Legacy behavior for backward compatibility
+            return jobRepository.findAll();
+        }
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
+        Page<JobRecord> resultPage = jobRepository.findAll(pageable);
+        return resultPage.getContent();
     }
 
     @GetMapping("/stats")
@@ -85,6 +105,17 @@ public class JobController {
             @RequestParam(defaultValue = "1") int delayMinutes,
             @RequestParam(required = false) List<MultipartFile> files) throws IOException {
 
+        // Input validation
+        if (jobName == null || jobName.trim().isEmpty()) {
+            throw new IllegalArgumentException("jobName cannot be empty");
+        }
+        if (processorClassName == null || processorClassName.trim().isEmpty()) {
+            throw new IllegalArgumentException("processorClassName cannot be empty");
+        }
+        if (delayDays < 0) delayDays = 0;
+        if (delayHours < 0) delayHours = 0;
+        if (delayMinutes < 0) delayMinutes = 0;
+
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime requested = now
                 .plusDays(delayDays)
@@ -107,7 +138,7 @@ public class JobController {
 
         // Handle File Uploads
         if (files != null && !files.isEmpty()) {
-            Path jobInputDir = Paths.get(INPUT_DIR, job.getId().toString());
+            Path jobInputDir = Paths.get(inputFileDirectory, job.getId().toString());
             Files.createDirectories(jobInputDir);
 
             for (MultipartFile file : files) {
@@ -194,5 +225,44 @@ public class JobController {
                 .build();
 
         quartzScheduler.scheduleJob(jobDetail, trigger);
+    }
+
+    /**
+     * Cancel a running job.
+     * @param jobId The job ID to cancel
+     */
+    @PostMapping("/cancel")
+    public java.util.Map<String, Object> cancelJob(@RequestParam Long jobId) {
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        
+        JobRecord job = jobRepository.findById(jobId).orElse(null);
+        if (job == null) {
+            response.put("success", false);
+            response.put("message", "Job not found");
+            return response;
+        }
+
+        if (!"RUNNING".equals(job.getStatus())) {
+            response.put("success", false);
+            response.put("message", "Job is not running (status: " + job.getStatus() + ")");
+            return response;
+        }
+
+        boolean cancelled = jobEngine.cancelJob(jobId);
+        
+        if (cancelled) {
+            job.setStatus("CANCELLED");
+            job.setJobEndDateTime(LocalDateTime.now());
+            job.setErrorReason("Job cancelled by user");
+            jobRepository.save(job);
+            
+            response.put("success", true);
+            response.put("message", "Job " + jobId + " cancelled successfully");
+        } else {
+            response.put("success", false);
+            response.put("message", "Failed to cancel job " + jobId);
+        }
+        
+        return response;
     }
 }

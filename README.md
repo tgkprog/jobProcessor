@@ -1,67 +1,84 @@
-# Job Processor
+# Job Processor Engine
 
-A robust Job Engine and Job Processor system built with Java 11 and Spring Boot.
+A powerful, dynamic Job Execution and Management system built with Java 11, Spring Boot, and Quartz. This engine allows you to load and run "Job Processors" provided as external JAR files at runtime without restarting the main service.
 
-## Overview
+## 🚀 Key Features
 
-This project implements a dynamic job execution system where "Job Processors" are external JAR files loaded at runtime. The "Job Engine" manages execution, thread pools, and timeouts.
+-   **Dynamic JAR Loading**: Upload and execute external Java code. Supports versioning and on-the-fly class loading.
+-   **Security & Validation**: Optional SHA-256 checksum verification for uploaded JARs to ensure code integrity.
+-   **Advanced Scheduling**: Built-in Quartz scheduler for managing job execution with precise timing (cron-like precision).
+-   **Job Monitoring Dashboard**: A modern, real-time web interface to track job status, execution history, and performance metrics.
+-   **File Management**: Automatic handling of input data files associated with specific job runs.
+-   **Resource Management**: Controlled execution using configurable thread pools and instance-based distribution.
+-   **Timeout Protection**: Automated interruption of jobs that exceed their estimated runtime (default 150% threshold).
 
-### Key Features
+## 🛠 Technical Stack
 
-- **Dynamic Loading**: Load and reload Job Processors from external JARs without restarting the engine.
-- **Resource Management**: Configurable thread pool and instance-based job distribution.
-- **Monitoring**: Real-time tracking of job status, execution time, and error logs.
-- **Timeout Handling**: Automated interruption of jobs exceeding 150% of their estimated time.
-- **Web UI**: Embedded HTML interface for managing the system and viewing jobs.
+-   **Backend**: Java 11, Spring Boot 2.7.18
+-   **Database**: H2 (Embedded / In-memory)
+-   **ORM**: Spring Data JPA / Hibernate
+-   **Scheduling**: Quartz / Spring Scheduler
+-   **Frontend**: Vanilla HTML5/CSS3/JS (Modern Refactored UI)
 
-## Technical Stack
+## 📁 Project Structure
 
-- **Core**: Java 11
-- **Framework**: Spring Boot 2.7.x
-- **Batch Processing**: Spring Batch
-- **Build Tool**: Maven
-- **Scheduling**: Spring Scheduler
+```text
+.
+├── app/              # Main Spring Boot Engine
+│   ├── src/          # Source code & static web resources
+│   ├── inputFiles/   # Managed storage for job inputs
+│   └── processors/   # Storage for uploaded JAR processors
+├── samples/          # Reference implementations of JobProcessors
+└── data/             # Persistent data storage
+```
 
-## Getting Started
+## 🚦 Getting Started
 
-### Prerequisites
+### 1. Build the Engine
+From the root directory:
+```bash
+cd app
+mvn clean install
+```
 
-- Java 11
-- Maven
+### 2. Run the Application
+```bash
+mvn spring-boot:run
+```
+The UI will be available at: [http://localhost:8080](http://localhost:8080)
 
-### Installation
+### 3. Create a Sample Processor
+To see the system in action, build the included sample:
+```bash
+cd samples
+mvn clean package
+```
+Verify the output at `samples/target/jobProc-samples-1.0.0.jar`.
 
-1. Clone the repository:
-   ```bash
-   git clone git@github.com:tgkprog/jobProcessor.git
-   ```
-2. Build the project:
-   ```bash
-   mvn clean install
-   ```
-3. Run the application:
-   ```bash
-   mvn spring-boot:run
-   ```
+## 🖥 Admin Panel & Security
 
-## Security
+The administrative functions (`admin.html` and `/api/admin/**`) are protected via Basic Authentication.
 
-The administrative sections (`admin.html` and `/api/admin/**`) are protected with Basic Authentication.
+-   **Default URL**: `/admin.html`
+-   **Credentials**: `admin` / `admin`
 
-- **Default Username**: `admin`
-- **Default Password**: `admin`
+In the Admin Panel, you can:
+-   Upload new Processor JARs.
+-   Register classes that implement the `JobProcessor` interface.
+-   Monitor system-wide statistics.
 
-## Architecture
+## 🏗 Developing a Job Processor
 
-The system consists of several main components:
-- **Job Engine**: Orchestrates job submission and monitoring.
-- **Job Processor Interface**: Standard interface (`acceptJob`, `processJob`) for external implementations.
-- **Management Controller**: REST/Web interface for runtime configuration.
-- **Thread Pool Executor**: Manages concurrent execution of jobs.
+Your external JAR must include a class that implements the `com.sel2in.jobProc.processor.JobProcessor` interface.
 
-## License
+```java
+public interface JobProcessor {
+    boolean acceptJob(JobContext context);
+    JobResult processJob(JobContext context);
+}
+```
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Refer to the `samples/` directory for a complete implementation example (`SimpleProcessor`).
 
 ---
-Created by Tushar Kapila
+Developed with ❤️ by Tushar Kapila

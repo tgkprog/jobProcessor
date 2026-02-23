@@ -1,16 +1,19 @@
 package com.sel2in.jobProc.service;
 
 import com.sel2in.jobProc.entity.InputDataFile;
+import com.sel2in.jobProc.entity.JobError;
 import com.sel2in.jobProc.entity.JobRecord;
 import com.sel2in.jobProc.entity.ProcessorDefinition;
 import com.sel2in.jobProc.processor.InputData;
 import com.sel2in.jobProc.processor.OutputData;
 import com.sel2in.jobProc.repo.InputDataFileRepository;
+import com.sel2in.jobProc.repo.JobErrorRepository;
 import com.sel2in.jobProc.repo.JobRepository;
 import com.sel2in.jobProc.repo.ProcessorRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -29,12 +32,14 @@ public class JobExecutionService {
     private final JobRepository jobRepository;
     private final ProcessorRepository processorRepository;
     private final InputDataFileRepository inputDataFileRepository;
+    private final JobErrorRepository jobErrorRepository;
     private final JobEngine jobEngine;
 
     /**
      * Called by the scheduler when a job's scheduled time arrives.
      * Loads the job from DB, resolves the processor JAR path, and runs it.
      */
+    @Transactional
     public void runJob(Long jobId) {
         log.info("=== Scheduler triggered for job ID: {} ===", jobId);
 
@@ -95,6 +100,16 @@ public class JobExecutionService {
             job.setMainErrorCode(output.getMainErrorCode());
             job.setErrorReason(output.getMainErrorReason());
             jobRepository.save(job);
+            
+            // Save error details if present
+            if (output.getMainErrorCode() != null && !output.getMainErrorCode().isEmpty()) {
+                JobError error = new JobError();
+                error.setJobId(job.getId());
+                error.setReasonCode(output.getMainErrorCode());
+                error.setReasonString(output.getMainErrorReason());
+                jobErrorRepository.save(error);
+            }
+            
             log.info("Job {} completed with status: {}", jobId, job.getStatus());
         }).exceptionally(ex -> {
             job.setJobEndDateTime(LocalDateTime.now());
@@ -102,6 +117,14 @@ public class JobExecutionService {
             job.setMainErrorCode("ENGINE_ERROR");
             job.setErrorReason(ex.getMessage());
             jobRepository.save(job);
+            
+            // Save error details
+            JobError error = new JobError();
+            error.setJobId(job.getId());
+            error.setReasonCode("ENGINE_ERROR");
+            error.setReasonString(ex.getMessage());
+            jobErrorRepository.save(error);
+            
             log.error("Job {} failed: {}", jobId, ex.getMessage());
             return null;
         });
