@@ -1,3 +1,5 @@
+app/inputFiles/**
+app/outputFiles/**
 *.db
 *.bin
 

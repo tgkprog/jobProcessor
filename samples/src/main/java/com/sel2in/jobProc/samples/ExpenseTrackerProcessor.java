@@ -152,6 +152,31 @@ public class ExpenseTrackerProcessor implements JobProcessor {
             params.put("processedAt", new Date().toString());
             output.setOutputParameters(params);
 
+            // ── 6. Optional sleep if 'sleep' parameter is provided ──
+            try {
+                Map<String, Object> inputParams = inputData.getParameters();
+                if (inputParams != null && inputParams.containsKey("sleep")) {
+                    Object sleepObj = inputParams.get("sleep");
+                    if (sleepObj != null) {
+                        try {
+                            long sleepMs = Long.parseLong(sleepObj.toString());
+                            if (sleepMs > 0) {
+                                double sleepSec = sleepMs / 1000.0;
+                                System.err.println(String.format("⚠️  WARNING: Sleeping for %.2f seconds (%d ms) before completion", sleepSec, sleepMs));
+                                Thread.sleep(sleepMs);
+                            }
+                        } catch (NumberFormatException nfe) {
+                            // Ignore if not a valid number
+                        }
+                    }
+                }
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+                System.err.println("Sleep interrupted");
+            } catch (Exception sleepEx) {
+                // Silently ignore sleep errors
+            }
+
         } catch (Exception ex) {
             output.setStatus("FAILED");
             output.setMainErrorCode("PROCESSING_ERROR");

@@ -7,6 +7,16 @@
     <link rel="stylesheet" href="res/main.css">
     <script src="res/header.js"></script>
     <style>
+        body {
+            margin: 8px;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
         .upload-zone {
             border: 2px dashed var(--border);
             border-radius: 8px;
@@ -64,13 +74,29 @@
         .delay-row .form-group {
             flex: 1;
         }
+
+        .params-table {
+            width: 100%;
+            margin-top: 8px;
+        }
+
+        .params-table th,
+        .params-table td {
+            padding: 6px;
+            border: 1px solid var(--border);
+        }
+
+        .params-table input[type="text"] {
+            width: 100%;
+            box-sizing: border-box;
+        }
     </style>
 </head>
 
 <body>
 
     <div class="container">
-        <h1>Schedule New Job</h1>
+        <h1>Schedule New Job <a href="jobs.html" style="font-size: 14px; margin-left: 15px;">📋 View Jobs</a></h1>
 
         <div class="section">
             <form id="scheduleJobForm">
@@ -96,6 +122,42 @@
                         <div class="label">Click or drag files here (CSV, TXT, etc.)</div>
                     </div>
                     <div class="file-list" id="fileList"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>Input Parameters (JSON)</label>
+                    <table class="params-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">#</th>
+                                <th style="width: 40%;">Name</th>
+                                <th style="width: 60%;">Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td><input type="text" id="paramName1" placeholder="e.g., reportType"></td>
+                                <td><input type="text" id="paramValue1" placeholder="e.g., monthly"></td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td><input type="text" id="paramName2" placeholder="e.g., department"></td>
+                                <td><input type="text" id="paramValue2" placeholder="e.g., Finance"></td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td><input type="text" id="paramName3" placeholder="e.g., year"></td>
+                                <td><input type="text" id="paramValue3" placeholder="e.g., 2026"></td>
+                            </tr>
+                            <tr>
+                                <td>4</td>
+                                <td><input type="text" id="paramName4" placeholder="e.g., email"></td>
+                                <td><input type="text" id="paramValue4" placeholder="e.g., admin@company.com"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="hint">These will be parsed into InputData JSON parameters</p>
                 </div>
 
                 <label>Earliest Run Time (delay from now)</label>
@@ -195,6 +257,19 @@
             formData.append('delayDays', document.getElementById('delayDays').value);
             formData.append('delayHours', document.getElementById('delayHours').value);
             formData.append('delayMinutes', document.getElementById('delayMinutes').value);
+
+            // Build InputData JSON from parameters table
+            const params = {};
+            for (let i = 1; i <= 4; i++) {
+                const name = document.getElementById('paramName' + i).value.trim();
+                const value = document.getElementById('paramValue' + i).value.trim();
+                if (name) {
+                    params[name] = value;
+                }
+            }
+            if (Object.keys(params).length > 0) {
+                formData.append('inputData', JSON.stringify(params));
+            }
 
             const fileInput = document.getElementById('inputFiles');
             for (let i = 0; i < fileInput.files.length; i++) {
