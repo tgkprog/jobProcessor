@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - Job Processor</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="res/main.css">
+    <script src="res/header.js"></script>
+    <style>
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 25px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            font-size: 1.2rem;
+            color: #555;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-item {
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            border-left: 5px solid #0b5394;
+        }
+
+        .stat-item .val {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #0b5394;
+        }
+
+        .stat-item .lbl {
+            font-size: 0.9rem;
+            color: #777;
+            text-transform: uppercase;
+        }
+
+        .status-SUCCESS {
+            border-left-color: #2e7d32;
+        }
+
+        .status-FAILED {
+            border-left-color: #c62828;
+        }
+
+        .status-RUNNING {
+            border-left-color: #e65100;
+        }
+
+        .status-SCHEDULED {
+            border-left-color: #1565c0;
+        }
+
+        canvas {
+            max-height: 300px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+
+        <h1>Job Performance Dashboard</h1>
+
+        <div class="summary-stats" id="summaryStats">
+            <!-- Stats will be loaded here -->
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <h2>Job Status Distribution</h2>
+                <canvas id="statusChart"></canvas>
+            </div>
+            <div class="card">
+                <h2>Recent Execution Times (seconds)</h2>
+                <canvas id="executionTimeChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            fetchStats();
+        });
+
+        function fetchStats() {
+            fetch('/api/job/stats')
+                .then(r => r.json())
+                .then(data => {
+                    renderSummary(data);
+                    renderStatusChart(data.statusCounts);
+                    renderExecutionChart(data.history);
+                });
+        }
+
+        function renderSummary(data) {
+            const summary = document.getElementById('summaryStats');
+            const counts = data.statusCounts;
+
+            summary.innerHTML = `
+                <div class="stat-item">
+                    <div class="val">${data.total}</div>
+                    <div class="lbl">Total Jobs</div>
+                </div>
+                <div class="stat-item status-SUCCESS">
+                    <div class="val">${counts.SUCCESS || 0}</div>
+                    <div class="lbl">Success</div>
+                </div>
+                <div class="stat-item status-FAILED">
+                    <div class="val">${counts.FAILED || counts.TIMED_OUT || 0}</div>
+                    <div class="lbl">Failed/Timeout</div>
+                </div>
+                <div class="stat-item status-RUNNING">
+                    <div class="val">${counts.RUNNING || 0}</div>
+                    <div class="lbl">Active</div>
+                </div>
+            `;
+        }
+
+        function renderStatusChart(counts) {
+            const ctx = document.getElementById('statusChart').getContext('2d');
+            const labels = Object.keys(counts);
+            const values = Object.values(counts);
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: [
+                            '#2e7d32', '#c62828', '#1565c0', '#e65100', '#757575', '#ad1457'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        }
+
+        function renderExecutionChart(history) {
+            const ctx = document.getElementById('executionTimeChart').getContext('2d');
+
+            // Calculate duration in seconds
+            const labels = history.map(j => '#' + j.id + ' ' + (j.jobName || '').substring(0, 10)).reverse();
+            const durations = history.map(j => {
+                if (!j.jobStartDateTime || !j.jobEndDateTime) return 0;
+                const start = new Date(j.jobStartDateTime);
+                const end = new Date(j.jobEndDateTime);
+                return (end - start) / 1000;
+            }).reverse();
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Duration (s)',
+                        data: durations,
+                        backgroundColor: '#0b5394'
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>

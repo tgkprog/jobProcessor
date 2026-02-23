@@ -16,5 +16,6 @@ public class OutputData implements Serializable {
     private java.util.Date jobStartDateTime;
     private java.util.Date jobEndDateTime;
     private String status; // SUCCESS, FAILED, TIMED_OUT
+    private String mainErrorCode;
     private String mainErrorReason;
 }

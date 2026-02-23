@@ -41,6 +41,19 @@
 ### Admin UI
 - [x] `jobs.html`: schedule with delay picker, job table, Run Now, auto-refresh 5s
 - [x] `jobsProcs.html`: processor management
+- [x] File upload in `jobs.html` for input files
+- [x] Job cancellation button in UI
+- [x] Thread pool / AppParams editor page in UI
+
+### Dynamic Loading
+- [x] Upload JAR via REST endpoint (multipart file upload)
+- [x] JAR checksum validation before loading (SHA-256)
+
+### Production
+- [x] Support `--dbReset` flag to wipe and re-seed DB
+- [x] MySQL/PostgreSQL datasource profile template
+- [x] Security: Basic HTTP authentication for admin APIs
+- [x] `samples/` project: example JobProcessor implementations
 
 ### Testing
 - [x] 15 JUnit integration tests (`src/test/java`) with real H2 in-memory DB
@@ -48,22 +61,19 @@
 
 ---
 
-## 📋 TODO (Future)
+## 📋 TODO 
 
-### Dynamic Loading
-- [ ] Upload JAR via REST endpoint (multipart file upload)
-- [ ] JAR checksum validation before loading
 
-### Admin UI
-- [ ] File upload in `jobs.html` for input files
-- [ ] Job cancellation button in UI
-- [ ] Thread pool / AppParams editor page in UI
+- [x] Advanced dashboard with charts for job execution history.
+        We store every schduled job, status, if it was canceled before run, or waiting (to be run) the time its meant to be run (earliest_run_time)
+        if it was run, then the time it was run (start_run_time) and the time it finished (end_run_time); main eror code, eror reason (forget about the list of errors for now)
 
-### Production
-- [ ] Support `--dbReset` flag to wipe and re-seed DB
-- [ ] MySQL/PostgreSQL datasource profile for production use
-- [ ] Security: authentication for admin APIs
-- [ ] `samples/` project: example JobProcessor implementations
+---
+
+References:
+app/docs/req.html
+other files in app/docs/
+        
 
 ---
 

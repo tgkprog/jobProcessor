@@ -1,4 +1,6 @@
-.db
+*.db
+*.bin
+
 # Java
 target/
 *.class

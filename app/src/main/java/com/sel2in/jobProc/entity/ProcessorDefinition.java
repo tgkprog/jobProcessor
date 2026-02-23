@@ -32,6 +32,9 @@ public class ProcessorDefinition {
     @Column(length = 1)
     private String active = "Y";
 
+    @Column(name = "checksum")
+    private String checksum;
+
     @PrePersist
     protected void onCreate() {
         createdTs = LocalDateTime.now();

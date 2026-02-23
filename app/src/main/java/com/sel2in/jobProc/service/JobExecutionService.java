@@ -1,9 +1,11 @@
 package com.sel2in.jobProc.service;
 
+import com.sel2in.jobProc.entity.InputDataFile;
 import com.sel2in.jobProc.entity.JobRecord;
 import com.sel2in.jobProc.entity.ProcessorDefinition;
 import com.sel2in.jobProc.processor.InputData;
 import com.sel2in.jobProc.processor.OutputData;
+import com.sel2in.jobProc.repo.InputDataFileRepository;
 import com.sel2in.jobProc.repo.JobRepository;
 import com.sel2in.jobProc.repo.ProcessorRepository;
 import lombok.RequiredArgsConstructor;
@@ -11,7 +13,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Loads a job from DB by ID and kicks off execution via JobEngine.
@@ -24,6 +28,7 @@ public class JobExecutionService {
 
     private final JobRepository jobRepository;
     private final ProcessorRepository processorRepository;
+    private final InputDataFileRepository inputDataFileRepository;
     private final JobEngine jobEngine;
 
     /**
@@ -46,11 +51,14 @@ public class JobExecutionService {
             return;
         }
 
-        // Resolve JAR path from ProcessorDefinition
+        // Resolve JAR path and checksum from ProcessorDefinition
         Optional<ProcessorDefinition> optProc = processorRepository.findByClassName(job.getProcessorClassName());
         String jarPath;
+        String checksum = null;
         if (optProc.isPresent()) {
-            jarPath = optProc.get().getJarPath();
+            ProcessorDefinition procDef = optProc.get();
+            jarPath = procDef.getJarPath();
+            checksum = procDef.getChecksum();
         } else {
             log.warn("No processor registered for class '{}', using default path.", job.getProcessorClassName());
             jarPath = "./processors/" + job.getProcessorClassName().substring(
@@ -70,15 +78,29 @@ public class JobExecutionService {
         inputData.setComment(job.getComment());
         inputData.setNotes(job.getNotes());
 
+        // Attach input files
+        List<InputDataFile> dbFiles = inputDataFileRepository.findByInputDataId(job.getId());
+        if (dbFiles != null && !dbFiles.isEmpty()) {
+            List<String> filePaths = dbFiles.stream()
+                    .map(InputDataFile::getFilePath)
+                    .collect(Collectors.toList());
+            inputData.setInputFiles(filePaths);
+            log.info("Attached {} input files to job {}", filePaths.size(), job.getId());
+        }
+
         // Execute async and update DB when done
-        jobEngine.executeAsync(inputData, jarPath).thenAccept(output -> {
+        jobEngine.executeAsync(inputData, jarPath, checksum).thenAccept(output -> {
             job.setJobEndDateTime(LocalDateTime.now());
             job.setStatus(output.getStatus() != null ? output.getStatus() : "SUCCESS");
+            job.setMainErrorCode(output.getMainErrorCode());
+            job.setErrorReason(output.getMainErrorReason());
             jobRepository.save(job);
             log.info("Job {} completed with status: {}", jobId, job.getStatus());
         }).exceptionally(ex -> {
             job.setJobEndDateTime(LocalDateTime.now());
             job.setStatus("FAILED");
+            job.setMainErrorCode("ENGINE_ERROR");
+            job.setErrorReason(ex.getMessage());
             jobRepository.save(job);
             log.error("Job {} failed: {}", jobId, ex.getMessage());
             return null;

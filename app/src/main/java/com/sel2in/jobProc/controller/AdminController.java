@@ -76,6 +76,8 @@ public class AdminController {
             // Update DB
             jobRepository.findById(jobId).ifPresent(job -> {
                 job.setStatus("CANCELLED");
+                job.setMainErrorCode("CANCELLED");
+                job.setErrorReason("Cancelled by admin");
                 job.setJobEndDateTime(LocalDateTime.now());
                 jobRepository.save(job);
             });

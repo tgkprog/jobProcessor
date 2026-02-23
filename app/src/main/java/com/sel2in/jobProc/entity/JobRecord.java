@@ -41,6 +41,12 @@ public class JobRecord {
     @Column(name = "job_end_datetime")
     private LocalDateTime jobEndDateTime;
 
+    @Column(name = "main_error_code")
+    private String mainErrorCode;
+
+    @Column(name = "error_reason")
+    private String errorReason;
+
     @Column(name = "created_ts", updatable = false)
     private LocalDateTime createdTs;
 

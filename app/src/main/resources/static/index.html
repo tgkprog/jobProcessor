@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Processor - Home</title>
+    <link rel="stylesheet" href="res/main.css">
+    <script src="res/header.js"></script>
+    <style>
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+            padding: 40px 0;
+            background: linear-gradient(135deg, var(--primary) 0%, #1a73e8 100%);
+            color: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(11, 83, 148, 0.2);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2.8rem;
+            letter-spacing: -1px;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 50px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 20px rgba(0, 0, 0, 0.08);
+            border-color: var(--accent);
+        }
+
+        .card .icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .card h3 {
+            margin: 10px 0;
+            color: var(--primary);
+        }
+
+        .card p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        .readme {
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .readme h2 {
+            color: var(--primary);
+            margin-top: 0;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 15px;
+        }
+
+        .readme-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .feature-list li {
+            margin-bottom: 12px;
+            padding-left: 25px;
+            position: relative;
+        }
+
+        .feature-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #2e7d32;
+            font-weight: bold;
+        }
+
+        @media (max-width: 600px) {
+            header h1 {
+                font-size: 2rem;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Job Processor Engine</h1>
+            <p>Dynamic JAR-based Job Orchestration & Monitoring</p>
+        </header>
+
+        <div class="grid">
+            <a href="jobs.html" class="card">
+                <span class="icon">🚀</span>
+                <h3>Jobs Tracking</h3>
+                <p>Schedule, run, and track active job statuses</p>
+            </a>
+            <a href="jobsProcs.html" class="card">
+                <span class="icon">🧩</span>
+                <h3>Processors</h3>
+                <p>Manage dynamic JAR processor definitions</p>
+            </a>
+            <a href="admin.html" class="card">
+                <span class="icon">⚙️</span>
+                <h3>Admin Panel</h3>
+                <p>Configure engine parameters and thread pools</p>
+            </a>
+            <a href="dashboard.html" class="card">
+                <span class="icon">📊</span>
+                <h3>Dashboard</h3>
+                <p>View execution history and performance metrics</p>
+            </a>
+        </div>
+
+        <section class="readme">
+            <h2>Project Overview</h2>
+            <div class="readme-content">
+                <div>
+                    <p>
+                        A robust, enterprise-ready Job Engine system designed to execute
+                        isolated processing logic bundled in JAR files. It handles the lifecycle
+                        of a job from submission to completion, including resource allocation
+                        and error tracking.
+                    </p>
+                    <p>
+                        Built with **Spring Boot** and **Quartz Scheduler**, it provides
+                        a flexible architecture for long-running or CPU-intensive tasks.
+                    </p>
+                </div>
+                <div>
+                    <ul class="feature-list">
+                        <li>**Hot Loading**: Attach JARs at runtime without restart</li>
+                        <li>**Intelligent Timeouts**: Auto-terminates runaway jobs</li>
+                        <li>**Real-time Scale**: Change thread pool size on-the-fly</li>
+                        <li>**Detailed Auditing**: Full history with error codes and reasons</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <footer>
+        &copy; 2026 Job Processor Engine. Created by Tushar Kapila.
+    </footer>
+
+</body>
+
+</html>

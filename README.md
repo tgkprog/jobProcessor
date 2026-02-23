@@ -44,6 +44,13 @@ This project implements a dynamic job execution system where "Job Processors" ar
    mvn spring-boot:run
    ```
 
+## Security
+
+The administrative sections (`admin.html` and `/api/admin/**`) are protected with Basic Authentication.
+
+- **Default Username**: `admin`
+- **Default Password**: `admin`
+
 ## Architecture
 
 The system consists of several main components:

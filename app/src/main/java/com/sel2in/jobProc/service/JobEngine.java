@@ -76,10 +76,10 @@ public class JobEngine {
     /**
      * Submits a job for asynchronous execution and tracks it.
      */
-    public CompletableFuture<OutputData> executeAsync(InputData inputData, String jarPath) {
+    public CompletableFuture<OutputData> executeAsync(InputData inputData, String jarPath, String checksum) {
         Long jobId = inputData.getInputDataId();
         CompletableFuture<OutputData> future = CompletableFuture.supplyAsync(
-                () -> execute(inputData, jarPath), executorService);
+                () -> execute(inputData, jarPath, checksum), executorService);
         if (jobId != null) {
             activeJobs.put(jobId, future);
             future.whenComplete((result, ex) -> activeJobs.remove(jobId));
@@ -110,12 +110,12 @@ public class JobEngine {
         return activeJobs.keySet();
     }
 
-    private OutputData execute(InputData inputData, String jarPath) {
+    private OutputData execute(InputData inputData, String jarPath, String checksum) {
         String className = inputData.getProcessorClassName();
         log.info("Executing job: {} using processor: {}", inputData.getJobName(), className);
 
         try {
-            JobProcessor processor = processorLoader.load(jarPath, className);
+            JobProcessor processor = processorLoader.load(jarPath, className, checksum);
             
             // 1. Review the job to get estimates
             JobEstimate estimate = processor.reviewJob(inputData);
@@ -141,6 +141,7 @@ public class JobEngine {
     private OutputData createErrorResult(String status, String reason) {
         OutputData error = new OutputData();
         error.setStatus(status);
+        error.setMainErrorCode(status);
         error.setMainErrorReason(reason);
         return error;
     }

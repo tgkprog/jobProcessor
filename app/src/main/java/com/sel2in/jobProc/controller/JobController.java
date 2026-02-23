@@ -1,6 +1,8 @@
 package com.sel2in.jobProc.controller;
 
+import com.sel2in.jobProc.entity.InputDataFile;
 import com.sel2in.jobProc.entity.JobRecord;
+import com.sel2in.jobProc.repo.InputDataFileRepository;
 import com.sel2in.jobProc.repo.JobRepository;
 import com.sel2in.jobProc.service.JobExecutionService;
 import com.sel2in.jobProc.service.ScheduledJobTrigger;
@@ -8,7 +10,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.*;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
@@ -23,14 +30,37 @@ public class JobController {
 
     /** Minimum delay before a job can run (seconds) */
     private static final long MIN_DELAY_SECONDS = 30;
+    private static final String INPUT_DIR = "./inputFiles";
 
     private final JobRepository jobRepository;
+    private final InputDataFileRepository inputDataFileRepository;
     private final Scheduler quartzScheduler;
     private final JobExecutionService jobExecutionService;
 
     @GetMapping("/status")
     public List<JobRecord> getStatus() {
         return jobRepository.findAll();
+    }
+
+    @GetMapping("/stats")
+    public java.util.Map<String, Object> getStats() {
+        List<JobRecord> jobs = jobRepository.findAll();
+        java.util.Map<String, Long> statusCounts = jobs.stream()
+                .collect(java.util.stream.Collectors.groupingBy(JobRecord::getStatus, java.util.stream.Collectors.counting()));
+
+        java.util.Map<String, Object> stats = new java.util.HashMap<>();
+        stats.put("total", jobs.size());
+        stats.put("statusCounts", statusCounts);
+        
+        // Last 10 finished jobs for history chart
+        List<JobRecord> history = jobs.stream()
+                .filter(j -> j.getJobEndDateTime() != null)
+                .sorted((a, b) -> b.getJobEndDateTime().compareTo(a.getJobEndDateTime()))
+                .limit(10)
+                .collect(java.util.stream.Collectors.toList());
+        stats.put("history", history);
+
+        return stats;
     }
 
     /**
@@ -43,6 +73,7 @@ public class JobController {
      * @param delayDays            Days from now (default 0)
      * @param delayHours           Hours from now (default 0)
      * @param delayMinutes         Minutes from now (default 1)
+     * @param files                Optional input files to upload
      */
     @PostMapping("/schedule")
     public JobRecord schedule(
@@ -51,7 +82,8 @@ public class JobController {
             @RequestParam(required = false) String comment,
             @RequestParam(defaultValue = "0") int delayDays,
             @RequestParam(defaultValue = "0") int delayHours,
-            @RequestParam(defaultValue = "1") int delayMinutes) {
+            @RequestParam(defaultValue = "1") int delayMinutes,
+            @RequestParam(required = false) List<MultipartFile> files) throws IOException {
 
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime requested = now
@@ -73,6 +105,27 @@ public class JobController {
         job.setStatus("SCHEDULED");
         job = jobRepository.save(job);
 
+        // Handle File Uploads
+        if (files != null && !files.isEmpty()) {
+            Path jobInputDir = Paths.get(INPUT_DIR, job.getId().toString());
+            Files.createDirectories(jobInputDir);
+
+            for (MultipartFile file : files) {
+                if (file.isEmpty()) continue;
+                String fileName = file.getOriginalFilename();
+                Path filePath = jobInputDir.resolve(fileName).toAbsolutePath();
+                file.transferTo(filePath.toFile());
+
+                InputDataFile idf = new InputDataFile();
+                idf.setInputDataId(job.getId());
+                idf.setFileName(fileName);
+                idf.setFilePath(filePath.toString());
+                idf.setFileSize(file.getSize());
+                inputDataFileRepository.save(idf);
+                log.info("Saved input file: {} for job {}", fileName, job.getId());
+            }
+        }
+
         long delaySec = ChronoUnit.SECONDS.between(now, runAt);
         log.info("Job {} '{}' will run in {}s at {}", job.getId(), jobName, delaySec, runAt);
 
@@ -90,13 +143,41 @@ public class JobController {
     }
 
     /**
-     * Manual trigger: run a job immediately by ID.
-     * Useful for re-running failed jobs or testing.
+     * Manual trigger: reschedule a job to run in 10 seconds.
+     * Only allowed if the job is SCHEDULED and its current scheduled time is 
+     * more than 20 seconds away (handled primarily by UI, but enforced here).
      */
     @GetMapping("/run")
     public String runNow(@RequestParam Long jobId) {
-        jobExecutionService.runJob(jobId);
-        return "Job " + jobId + " triggered";
+        JobRecord job = jobRepository.findById(jobId).orElse(null);
+        if (job == null) return "Job not found";
+
+        if (!"SCHEDULED".equals(job.getStatus()) && !"FAILED".equals(job.getStatus())) {
+            return "Job is in status " + job.getStatus() + ", cannot trigger run now";
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime runAt = now.plusSeconds(10);
+
+        // Update DB
+        job.setStatus("SCHEDULED");
+        job.setScheduledRunTime(runAt);
+        jobRepository.save(job);
+
+        // Reschedule via Quartz
+        try {
+            // Remove old trigger/job if exists
+            quartzScheduler.unscheduleJob(new TriggerKey("trigger-" + jobId, "jobproc"));
+            quartzScheduler.deleteJob(new JobKey("job-" + jobId, "jobproc"));
+
+            // Schedule fresh
+            scheduleQuartzJob(jobId, runAt);
+        } catch (SchedulerException e) {
+            log.error("Failed to reschedule Quartz trigger for job {}", jobId, e);
+            return "Error rescheduling job: " + e.getMessage();
+        }
+
+        return "Job " + jobId + " rescheduled to run in 10 seconds";
     }
 
     private void scheduleQuartzJob(Long jobId, LocalDateTime runAt) throws SchedulerException {

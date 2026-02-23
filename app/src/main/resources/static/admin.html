@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Admin - Job Processor</title>
+    <link rel="stylesheet" href="res/main.css">
+    <script src="res/header.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Admin Panel</h1>
+
+        <!-- Engine Status -->
+        <div class="section">
+            <h2>Engine Status</h2>
+            <div id="engineStats">Loading...</div>
+        </div>
+
+        <!-- Thread Pool -->
+        <div class="section">
+            <h2>Thread Pool</h2>
+            <div class="form-row">
+                <div class="field">
+                    <label for="newPoolSize">New Pool Size (1-50)</label>
+                    <input type="number" id="newPoolSize" min="1" max="50" value="5">
+                </div>
+                <div>
+                    <button onclick="resizePool()">Resize</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- AppParams -->
+        <div class="section">
+            <h2>Application Parameters</h2>
+            <table id="paramsTable">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Value</th>
+                        <th>Description</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            <h3>Add / Update Parameter</h3>
+            <div class="form-row">
+                <div class="field">
+                    <label for="paramName">Name</label>
+                    <input type="text" id="paramName" placeholder="e.g., numberOfThreads">
+                </div>
+                <div class="field">
+                    <label for="paramValue">Value</label>
+                    <input type="text" id="paramValue" placeholder="e.g., 10">
+                </div>
+                <div class="field">
+                    <label for="paramDesc">Description</label>
+                    <input type="text" id="paramDesc" placeholder="Optional">
+                </div>
+                <div>
+                    <button onclick="saveParam()">Save</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upload JAR -->
+        <div class="section">
+            <h2>Upload Processor JAR</h2>
+            <div class="form-row">
+                <div class="field">
+                    <label for="jarFile">JAR File</label>
+                    <input type="file" id="jarFile" accept=".jar">
+                </div>
+                <div class="field">
+                    <label for="jarClassName">Processor Class Name</label>
+                    <input type="text" id="jarClassName" placeholder="com.example.MyProcessor">
+                </div>
+                <div>
+                    <button onclick="uploadJar()">Upload</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function refreshEngine() {
+            fetch('/api/admin/engine/status')
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('engineStats').innerHTML =
+                        '<div class="stat-box"><div class="val">' + data.poolSize + '</div><div class="lbl">Pool Size</div></div>' +
+                        '<div class="stat-box"><div class="val">' + data.activeThreads + '</div><div class="lbl">Active Threads</div></div>' +
+                        '<div class="stat-box"><div class="val">' + (data.activeJobIds ? data.activeJobIds.length : 0) + '</div><div class="lbl">Active Jobs</div></div>';
+                    document.getElementById('newPoolSize').value = data.poolSize;
+                });
+        }
+
+        function refreshParams() {
+            fetch('/api/admin/params')
+                .then(r => r.json())
+                .then(data => {
+                    const tbody = document.querySelector('#paramsTable tbody');
+                    tbody.innerHTML = '';
+                    data.forEach(p => {
+                        const row = tbody.insertRow();
+                        row.insertCell(0).innerText = p.name;
+                        row.insertCell(1).innerText = p.value;
+                        row.insertCell(2).innerText = p.description || '';
+                        row.insertCell(3).innerHTML =
+                            '<button class="btn-small" onclick="editParam(\'' + p.name + '\',\'' + p.value + '\',\'' + (p.description || '') + '\')">Edit</button>';
+                    });
+                });
+        }
+
+        function editParam(name, value, desc) {
+            document.getElementById('paramName').value = name;
+            document.getElementById('paramValue').value = value;
+            document.getElementById('paramDesc').value = desc;
+        }
+
+        function saveParam() {
+            const params = new URLSearchParams();
+            params.append('name', document.getElementById('paramName').value);
+            params.append('value', document.getElementById('paramValue').value);
+            const desc = document.getElementById('paramDesc').value;
+            if (desc) params.append('description', desc);
+
+            fetch('/api/admin/params?' + params.toString(), { method: 'POST' })
+                .then(r => r.json())
+                .then(() => { refreshParams(); refreshEngine(); })
+                .catch(e => alert('Error: ' + e));
+        }
+
+        function resizePool() {
+            const size = document.getElementById('newPoolSize').value;
+            fetch('/api/admin/params?name=numberOfThreads&value=' + size + '&description=Thread+pool+size', { method: 'POST' })
+                .then(r => r.json())
+                .then(() => { refreshEngine(); refreshParams(); alert('Pool resized to ' + size); });
+        }
+
+        function uploadJar() {
+            const fileInput = document.getElementById('jarFile');
+            const className = document.getElementById('jarClassName').value;
+            if (!fileInput.files.length || !className) {
+                alert('Select a JAR file and enter the class name');
+                return;
+            }
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('className', className);
+
+            fetch('/api/job/uploadJar', { method: 'POST', body: formData })
+                .then(r => r.text())
+                .then(msg => { alert(msg); fileInput.value = ''; })
+                .catch(e => alert('Error: ' + e));
+        }
+
+        window.onload = function () { refreshEngine(); refreshParams(); };
+        setInterval(refreshEngine, 5000);
+    </script>
+</body>
+
+</html>
