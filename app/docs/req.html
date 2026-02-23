@@ -13,14 +13,17 @@
             margin-bottom: 20px;
             border-left: 4px solid #0b5394;
         }
+
         .doc-nav h3 {
             margin-top: 0;
         }
+
         .doc-nav a {
             color: #0b5394;
             text-decoration: none;
             font-weight: bold;
         }
+
         .doc-nav a:hover {
             text-decoration: underline;
         }
@@ -35,7 +38,8 @@
         <h3>📚 Documentation</h3>
         <p>
             <strong>Requirements:</strong> This document (req.html)<br>
-            <strong>Implementation Review:</strong> <a href="review.html">review.html</a> - Comprehensive analysis of the implementation<br>
+            <strong>Implementation Review:</strong> <a href="review.html">review.html</a> - Comprehensive analysis of
+            the implementation<br>
             <strong>Developer Notes:</strong> <a href="todo_and_dont.md">todo_and_dont.md</a>
         </p>
     </div>
@@ -346,8 +350,6 @@ jobProcessors:
 
   jarPath: /processors/my.jar
 
-  instances: 2
-
 </pre>
 
         Runtime Controller Operations:
@@ -362,17 +364,15 @@ jobProcessors:
 
             <li>Reload Job Processor</li>
 
-            <li>Add instances</li>
-
         </ul>
 
         Constraints:
 
         <ul>
 
-            <li>Each instance handles only ONE job at a time</li>
+            <li>Each processor is loaded fresh per job run (thread-safe)</li>
 
-            <li>Max concurrent jobs = min(thread pool, processor instances)</li>
+            <li>Max concurrent jobs = thread pool size</li>
 
         </ul>
 

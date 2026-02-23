@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Create Job - Job Processor</title>
+    <link rel="stylesheet" href="res/main.css">
+    <script src="res/header.js"></script>
+    <style>
+        .upload-zone {
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.3s, background 0.3s;
+            position: relative;
+        }
+
+        .upload-zone:hover,
+        .upload-zone.drag-over {
+            border-color: var(--accent);
+            background: #eaf4fd;
+        }
+
+        .upload-zone input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .upload-zone .icon {
+            font-size: 24px;
+        }
+
+        .upload-zone .label {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .file-list {
+            margin-top: 8px;
+            text-align: left;
+        }
+
+        .file-list .file-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #e8f4f8;
+            border-radius: 12px;
+            padding: 3px 10px;
+            font-size: 12px;
+            margin: 2px 4px 2px 0;
+        }
+
+        .delay-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .delay-row .form-group {
+            flex: 1;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>Schedule New Job</h1>
+
+        <div class="section">
+            <form id="scheduleJobForm">
+                <div class="form-group">
+                    <label for="processorClassName">Processor Class</label>
+                    <select id="processorClassName" name="processorClassName" required onchange="onProcessorSelect()">
+                        <option value="">— Select a processor —</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="jobName">Job Name</label>
+                    <input type="text" id="jobName" name="jobName" placeholder="e.g., Monthly Audit" required>
+                </div>
+                <div class="form-group">
+                    <label for="comment">Comment</label>
+                    <input type="text" id="comment" name="comment" placeholder="Optional notes">
+                </div>
+                <div class="form-group">
+                    <label>Input Files</label>
+                    <div class="upload-zone" id="uploadZone">
+                        <input type="file" id="inputFiles" name="files" multiple onchange="updateFileList()">
+                        <div class="icon">📁</div>
+                        <div class="label">Click or drag files here (CSV, TXT, etc.)</div>
+                    </div>
+                    <div class="file-list" id="fileList"></div>
+                </div>
+
+                <label>Earliest Run Time (delay from now)</label>
+                <div class="delay-row">
+                    <div class="form-group">
+                        <label for="delayDays">Days</label>
+                        <input type="number" id="delayDays" name="delayDays" value="0" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="delayHours">Hours</label>
+                        <input type="number" id="delayHours" name="delayHours" value="0" min="0" max="23">
+                    </div>
+                    <div class="form-group">
+                        <label for="delayMinutes">Minutes</label>
+                        <input type="number" id="delayMinutes" name="delayMinutes" value="1" min="0" max="59">
+                    </div>
+                </div>
+                <p class="hint">Minimum delay is 30 seconds. Default: 1 minute.</p>
+
+                <button type="button" id="submitBtn" onclick="submitJob()" disabled>Schedule Job</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = "/api/job";
+
+        window.onload = function () {
+            loadProcessors().then(() => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const processor = urlParams.get('processor');
+                if (processor) {
+                    document.getElementById('processorClassName').value = processor;
+                    onProcessorSelect();
+                }
+            });
+
+            const zone = document.getElementById('uploadZone');
+            zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+            zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+            zone.addEventListener('drop', e => {
+                e.preventDefault();
+                zone.classList.remove('drag-over');
+                document.getElementById('inputFiles').files = e.dataTransfer.files;
+                updateFileList();
+            });
+        };
+
+        function loadProcessors() {
+            return fetch(API_BASE + '/listAll')
+                .then(res => res.json())
+                .then(procs => {
+                    const sel = document.getElementById('processorClassName');
+                    const btn = document.getElementById('submitBtn');
+                    if (!procs || procs.length === 0) {
+                        sel.innerHTML = '<option value="">No processors registered</option>';
+                        btn.disabled = true;
+                    } else {
+                        sel.innerHTML = '<option value="">— Select a processor —</option>';
+                        procs.forEach(p => {
+                            const opt = document.createElement('option');
+                            opt.value = p.className;
+                            opt.textContent = p.className.split('.').pop() + '  (' + p.className + ')';
+                            sel.appendChild(opt);
+                        });
+                        btn.disabled = false;
+                    }
+                })
+                .catch(() => { });
+        }
+
+        function onProcessorSelect() {
+            const sel = document.getElementById('processorClassName');
+            const jobNameInput = document.getElementById('jobName');
+            if (sel.value && !jobNameInput.value) {
+                jobNameInput.value = 'Run ' + sel.value.split('.').pop();
+            }
+        }
+
+        function updateFileList() {
+            const input = document.getElementById('inputFiles');
+            const listDiv = document.getElementById('fileList');
+            if (!input.files || input.files.length === 0) { listDiv.innerHTML = ''; return; }
+            let html = '';
+            for (let i = 0; i < input.files.length; i++) {
+                const f = input.files[i];
+                html += '<span class="file-item">📄 ' + f.name + ' (' + (f.size / 1024).toFixed(1) + ' KB)</span>';
+            }
+            listDiv.innerHTML = html;
+        }
+
+        function submitJob() {
+            const formData = new FormData();
+            formData.append('jobName', document.getElementById('jobName').value);
+            formData.append('processorClassName', document.getElementById('processorClassName').value);
+            formData.append('comment', document.getElementById('comment').value);
+            formData.append('delayDays', document.getElementById('delayDays').value);
+            formData.append('delayHours', document.getElementById('delayHours').value);
+            formData.append('delayMinutes', document.getElementById('delayMinutes').value);
+
+            const fileInput = document.getElementById('inputFiles');
+            for (let i = 0; i < fileInput.files.length; i++) {
+                formData.append('files', fileInput.files[i]);
+            }
+
+            fetch(API_BASE + "/schedule", { method: 'POST', body: formData })
+                .then(res => res.json())
+                .then(data => {
+                    alert("Job Scheduled!\nID: " + data.id + "\nRuns at: " + data.scheduledRunTime.replace("T", " ").substring(0, 16));
+                    document.getElementById('scheduleJobForm').reset();
+                    document.getElementById('fileList').innerHTML = '';
+                    // Offer to go to jobs page
+                    if (confirm("View job status?")) window.location.href = 'jobs.html';
+                })
+                .catch(err => alert("Error scheduling job: " + err));
+        }
+    </script>
+
+</body>
+
+</html>

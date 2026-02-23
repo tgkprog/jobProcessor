@@ -32,28 +32,57 @@ A powerful, dynamic Job Execution and Management system built with Java 11, Spri
 └── data/             # Persistent data storage
 ```
 
-## 🚦 Getting Started
+## 🚦 Getting Started (Fresh System)
 
-### 1. Build the Engine
-From the root directory:
+### Prerequisites
+-   Java 11+ (JDK)
+-   Maven 3.6+
+
+### Step 1: Build & Install the Engine
 ```bash
 cd app
 mvn clean install
 ```
+This compiles the engine, runs tests, and installs the core JAR to your local Maven repo (required by samples).
 
-### 2. Run the Application
+### Step 2: Build the Sample Processors
 ```bash
+cd ../samples
+mvn clean package
+```
+Output: `samples/target/jobProc-samples-1.0.0.jar`
+
+### Step 3: Deploy the Samples JAR
+Copy the built JAR into the engine's `processors/` directory:
+```bash
+cp samples/target/jobProc-samples-1.0.0.jar app/processors/
+```
+
+### Step 4: Run the Engine
+```bash
+cd app
+java -jar target/jobProc-1.0.0-fat.jar
+```
+Or via Maven:
+```bash
+cd app
 mvn spring-boot:run
 ```
 The UI will be available at: [http://localhost:8080](http://localhost:8080)
 
-### 3. Create a Sample Processor
-To see the system in action, build the included sample:
+### Step 5: Register Processors via Admin UI
+1.  Open `/admin.html` (login: `admin` / `admin`).
+2.  Upload the samples JAR, or register processors manually with class names:
+    -   `com.sel2in.jobProc.samples.SimpleProcessor`
+    -   `com.sel2in.jobProc.samples.ExpenseTrackerProcessor`
+
+### Quick One-Liner (build everything)
 ```bash
-cd samples
-mvn clean package
+cd app && mvn clean install && cd ../samples && mvn clean package && cp target/jobProc-samples-1.0.0.jar ../app/processors/ && cd ../app && java -jar target/jobProc-1.0.0-fat.jar
 ```
-Verify the output at `samples/target/jobProc-samples-1.0.0.jar`.
+
+### ⚠️ Re-deploying Updated JARs
+If you rebuild a samples JAR after the engine is already running, use the **Admin Panel → Upload JAR** feature instead of a manual file copy. This ensures the engine evicts its cached ClassLoader and picks up the new classes.
 
 ## 🖥 Admin Panel & Security
 

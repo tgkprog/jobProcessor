@@ -23,8 +23,8 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -43,6 +43,12 @@ public class JobController {
     
     @org.springframework.beans.factory.annotation.Value("${jobproc.inputFileDirectory:./inputFiles}")
     private String inputFileDirectory;
+
+    @GetMapping("/serverTime")
+    @ResponseBody
+    public String serverTime() {
+        return LocalDateTime.now().toString().replace("T", " ").substring(0, 19);
+    }
 
     @GetMapping("/status")
     public List<JobRecord> getStatus(
@@ -264,5 +270,53 @@ public class JobController {
         }
         
         return response;
+    }
+
+    /**
+     * Returns up to 3 input and 3 output file names for a given job.
+     * Used by the jobs UI to show inline file links.
+     */
+    @GetMapping("/files/{jobId}")
+    public Map<String, Object> getJobFiles(@PathVariable Long jobId) {
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("jobId", jobId);
+
+        // Input files from DB
+        List<com.sel2in.jobProc.entity.InputDataFile> dbFiles =
+                inputDataFileRepository.findByInputDataId(jobId);
+        List<Map<String, String>> inputs = new ArrayList<>();
+        if (dbFiles != null) {
+            for (int i = 0; i < Math.min(dbFiles.size(), 3); i++) {
+                Map<String, String> f = new LinkedHashMap<>();
+                f.put("name", dbFiles.get(i).getFileName());
+                f.put("url", "/dwn/input/" + jobId + "/" + dbFiles.get(i).getFileName());
+                inputs.add(f);
+            }
+        }
+        result.put("inputFiles", inputs);
+
+        // Output files from disk
+        List<Map<String, String>> outputs = new ArrayList<>();
+        java.nio.file.Path outDir = java.nio.file.Paths.get("./outputFiles", String.valueOf(jobId));
+        if (java.nio.file.Files.exists(outDir) && java.nio.file.Files.isDirectory(outDir)) {
+            try (var stream = java.nio.file.Files.list(outDir)) {
+                List<java.nio.file.Path> files = stream
+                        .filter(java.nio.file.Files::isRegularFile)
+                        .sorted()
+                        .limit(3)
+                        .collect(Collectors.toList());
+                for (java.nio.file.Path p : files) {
+                    Map<String, String> f = new LinkedHashMap<>();
+                    f.put("name", p.getFileName().toString());
+                    f.put("url", "/dwn/" + jobId + "/" + p.getFileName().toString());
+                    outputs.add(f);
+                }
+            } catch (IOException e) {
+                log.warn("Could not list output files for job {}", jobId, e);
+            }
+        }
+        result.put("outputFiles", outputs);
+
+        return result;
     }
 }

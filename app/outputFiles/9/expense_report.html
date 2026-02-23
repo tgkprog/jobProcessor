@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Expense Report – 2025dec a</title>
+<style>
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: #0f172a; color: #e2e8f0;
+  line-height: 1.6;
+}
+.hero {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  padding: 2.5rem 2rem; text-align: center;
+  border-bottom: 1px solid #334155;
+}
+.hero h1 { font-size: 2rem; letter-spacing: -0.02em; }
+.subtitle { color: #94a3b8; margin-top: 0.4rem; }
+.grand-total { margin-top: 1rem; font-size: 1.3rem; color: #a5f3fc; }
+.container { max-width: 1100px; margin: 0 auto; padding: 1.5rem; }
+
+/* Cards */
+.cards { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem; }
+.card {
+  background: #1e293b; border-radius: 10px; padding: 1.2rem 1.4rem;
+  flex: 1 1 200px; min-width: 180px;
+  transition: transform 0.2s;
+}
+.card:hover { transform: translateY(-3px); }
+.card-cat { font-weight: 700; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.card-amount { font-size: 1.5rem; font-weight: 700; margin: 0.3rem 0; }
+.card-pct, .card-count { font-size: 0.82rem; color: #94a3b8; }
+
+/* Charts */
+.charts { display: flex; flex-wrap: wrap; gap: 2rem; margin-bottom: 2rem; }
+.chart-box {
+  background: #1e293b; border-radius: 12px; padding: 1.5rem;
+  flex: 1 1 420px;
+}
+.chart-box h2 { font-size: 1.1rem; margin-bottom: 1rem; color: #cbd5e1; }
+.bar-chart { width: 100%; height: auto; }
+.bar-label { fill: #cbd5e1; font-size: 13px; }
+.bar-val   { fill: #94a3b8; font-size: 12px; }
+.bar-rect  { transition: opacity 0.2s; } .bar-rect:hover { opacity: 0.8; }
+.donut-chart { width: 100%; height: auto; }
+.donut-slice { transition: opacity 0.2s; } .donut-slice:hover { opacity: 0.85; }
+.legend-text { fill: #cbd5e1; font-size: 13px; }
+.donut-center-line1 { fill: #94a3b8; font-size: 14px; }
+.donut-center-line2 { fill: #f1f5f9; font-size: 18px; font-weight: 700; }
+
+/* Details */
+.details { margin-top: 1rem; }
+.details h2 { font-size: 1.2rem; margin-bottom: 1rem; }
+.cat-detail { margin-bottom: 0.6rem; }
+.cat-detail summary {
+  cursor: pointer; padding: 0.7rem 1rem;
+  background: #1e293b; border-radius: 8px;
+  font-weight: 600; list-style: none;
+}
+.cat-detail summary::-webkit-details-marker { display: none; }
+.cat-detail summary::before { content: '▸ '; }
+.cat-detail[open] summary::before { content: '▾ '; }
+table { width: 100%; border-collapse: collapse; margin: 0.5rem 0 1rem; }
+th { text-align: left; color: #94a3b8; border-bottom: 1px solid #334155; padding: 0.5rem 0.8rem; font-size: 0.85rem; }
+td { padding: 0.45rem 0.8rem; border-bottom: 1px solid #1e293b; font-size: 0.9rem; }
+.amt { text-align: right; font-variant-numeric: tabular-nums; }
+footer { text-align: center; color: #475569; font-size: 0.78rem; padding: 2rem 0 1rem; }
+@media (max-width: 640px) { .cards { flex-direction: column; } .charts { flex-direction: column; } }
+</style>
+</head>
+<body>
+<header class="hero">
+  <h1>📊 Expense Report</h1>
+  <p class="subtitle">2025dec a &bull; 31 transactions &bull; 1 file(s) processed</p>
+  <p class="grand-total">Grand Total: <strong>₹133,585.00</strong></p>
+</header>
+<main class="container">
+<section class="cards">
+<div class="card" style="border-top:4px solid #6366f1">
+  <div class="card-cat" style="color:#6366f1">Housing</div>
+  <div class="card-amount">₹49,750.00</div>
+  <div class="card-pct">37.2% of total</div>
+  <div class="card-count">2 transactions</div>
+</div>
+<div class="card" style="border-top:4px solid #f59e0b">
+  <div class="card-cat" style="color:#f59e0b">Food</div>
+  <div class="card-amount">₹13,480.00</div>
+  <div class="card-pct">10.1% of total</div>
+  <div class="card-count">5 transactions</div>
+</div>
+<div class="card" style="border-top:4px solid #10b981">
+  <div class="card-cat" style="color:#10b981">Utilities</div>
+  <div class="card-amount">₹4,088.00</div>
+  <div class="card-pct">3.1% of total</div>
+  <div class="card-count">3 transactions</div>
+</div>
+<div class="card" style="border-top:4px solid #3b82f6">
+  <div class="card-cat" style="color:#3b82f6">Transport</div>
+  <div class="card-amount">₹14,430.00</div>
+  <div class="card-pct">10.8% of total</div>
+  <div class="card-count">6 transactions</div>
+</div>
+<div class="card" style="border-top:4px solid #ef4444">
+  <div class="card-cat" style="color:#ef4444">Healthcare</div>
+  <div class="card-amount">₹16,880.00</div>
+  <div class="card-pct">12.6% of total</div>
+  <div class="card-count">3 transactions</div>
+</div>
+<div class="card" style="border-top:4px solid #8b5cf6">
+  <div class="card-cat" style="color:#8b5cf6">Education</div>
+  <div class="card-amount">₹7,420.00</div>
+  <div class="card-pct">5.6% of total</div>
+  <div class="card-count">3 transactions</div>
+</div>
+<div class="card" style="border-top:4px solid #ec4899">
+  <div class="card-cat" style="color:#ec4899">Entertainment</div>
+  <div class="card-amount">₹4,298.00</div>
+  <div class="card-pct">3.2% of total</div>
+  <div class="card-count">2 transactions</div>
+</div>
+<div class="card" style="border-top:4px solid #14b8a6">
+  <div class="card-cat" style="color:#14b8a6">Shopping</div>
+  <div class="card-amount">₹18,349.00</div>
+  <div class="card-pct">13.7% of total</div>
+  <div class="card-count">4 transactions</div>
+</div>
+<div class="card" style="border-top:4px solid #78716c">
+  <div class="card-cat" style="color:#78716c">Other</div>
+  <div class="card-amount">₹4,890.00</div>
+  <div class="card-pct">3.7% of total</div>
+  <div class="card-count">3 transactions</div>
+</div>
+</section>
+<section class="charts">
+<div class="chart-box">
+<h2>Category Breakdown</h2>
+<svg viewBox="0 0 720 380" class="bar-chart" xmlns="http://www.w3.org/2000/svg">
+  <text x="112" y="31" text-anchor="end" class="bar-label">Housing</text>
+  <rect x="120" y="10" width="520" height="32" rx="4" fill="#6366f1" class="bar-rect"/>
+  <text x="646" y="31" class="bar-val">₹49,750.00</text>
+  <text x="112" y="71" text-anchor="end" class="bar-label">Food</text>
+  <rect x="120" y="50" width="140" height="32" rx="4" fill="#f59e0b" class="bar-rect"/>
+  <text x="266" y="71" class="bar-val">₹13,480.00</text>
+  <text x="112" y="111" text-anchor="end" class="bar-label">Utilities</text>
+  <rect x="120" y="90" width="42" height="32" rx="4" fill="#10b981" class="bar-rect"/>
+  <text x="168" y="111" class="bar-val">₹4,088.00</text>
+  <text x="112" y="151" text-anchor="end" class="bar-label">Transport</text>
+  <rect x="120" y="130" width="150" height="32" rx="4" fill="#3b82f6" class="bar-rect"/>
+  <text x="276" y="151" class="bar-val">₹14,430.00</text>
+  <text x="112" y="191" text-anchor="end" class="bar-label">Healthcare</text>
+  <rect x="120" y="170" width="176" height="32" rx="4" fill="#ef4444" class="bar-rect"/>
+  <text x="302" y="191" class="bar-val">₹16,880.00</text>
+  <text x="112" y="231" text-anchor="end" class="bar-label">Education</text>
+  <rect x="120" y="210" width="77" height="32" rx="4" fill="#8b5cf6" class="bar-rect"/>
+  <text x="203" y="231" class="bar-val">₹7,420.00</text>
+  <text x="112" y="271" text-anchor="end" class="bar-label">Entertainment</text>
+  <rect x="120" y="250" width="44" height="32" rx="4" fill="#ec4899" class="bar-rect"/>
+  <text x="170" y="271" class="bar-val">₹4,298.00</text>
+  <text x="112" y="311" text-anchor="end" class="bar-label">Shopping</text>
+  <rect x="120" y="290" width="191" height="32" rx="4" fill="#14b8a6" class="bar-rect"/>
+  <text x="317" y="311" class="bar-val">₹18,349.00</text>
+  <text x="112" y="351" text-anchor="end" class="bar-label">Other</text>
+  <rect x="120" y="330" width="51" height="32" rx="4" fill="#78716c" class="bar-rect"/>
+  <text x="177" y="351" class="bar-val">₹4,890.00</text>
+</svg>
+</div>
+<div class="chart-box">
+<h2>Spending Distribution</h2>
+<svg viewBox="0 0 500 300" class="donut-chart" xmlns="http://www.w3.org/2000/svg">
+  <path d="M 150.00 40.00 A 110 110 0 0 1 229.03 226.51 L 193.11 191.73 A 60 60 0 0 0 150.00 90.00 Z" fill="#6366f1" class="donut-slice"/>
+  <rect x="320" y="20" width="14" height="14" rx="3" fill="#6366f1"/>
+  <text x="340" y="32" class="legend-text">Housing (37%)</text>
+  <path d="M 229.03 226.51 A 110 110 0 0 1 168.35 258.46 L 160.01 209.16 A 60 60 0 0 0 193.11 191.73 Z" fill="#f59e0b" class="donut-slice"/>
+  <rect x="320" y="48" width="14" height="14" rx="3" fill="#f59e0b"/>
+  <text x="340" y="60" class="legend-text">Food (10%)</text>
+  <path d="M 168.35 258.46 A 110 110 0 0 1 147.28 259.97 L 148.52 209.98 A 60 60 0 0 0 160.01 209.16 Z" fill="#10b981" class="donut-slice"/>
+  <rect x="320" y="76" width="14" height="14" rx="3" fill="#10b981"/>
+  <text x="340" y="88" class="legend-text">Utilities (3%)</text>
+  <path d="M 147.28 259.97 A 110 110 0 0 1 78.85 233.89 L 111.19 195.76 A 60 60 0 0 0 148.52 209.98 Z" fill="#3b82f6" class="donut-slice"/>
+  <rect x="320" y="104" width="14" height="14" rx="3" fill="#3b82f6"/>
+  <text x="340" y="116" class="legend-text">Transport (11%)</text>
+  <path d="M 78.85 233.89 A 110 110 0 0 1 40.30 158.07 L 90.16 154.40 A 60 60 0 0 0 111.19 195.76 Z" fill="#ef4444" class="donut-slice"/>
+  <rect x="320" y="132" width="14" height="14" rx="3" fill="#ef4444"/>
+  <text x="340" y="144" class="legend-text">Healthcare (13%)</text>
+  <path d="M 40.30 158.07 A 110 110 0 0 1 44.15 120.07 L 92.26 133.67 A 60 60 0 0 0 90.16 154.40 Z" fill="#8b5cf6" class="donut-slice"/>
+  <rect x="320" y="160" width="14" height="14" rx="3" fill="#8b5cf6"/>
+  <text x="340" y="172" class="legend-text">Education (6%)</text>
+  <path d="M 44.15 120.07 A 110 110 0 0 1 52.32 99.42 L 96.72 122.41 A 60 60 0 0 0 92.26 133.67 Z" fill="#ec4899" class="donut-slice"/>
+  <rect x="320" y="188" width="14" height="14" rx="3" fill="#ec4899"/>
+  <text x="340" y="200" class="legend-text">Entertainment (3%)</text>
+  <path d="M 52.32 99.42 A 110 110 0 0 1 124.92 42.90 L 136.32 91.58 A 60 60 0 0 0 96.72 122.41 Z" fill="#14b8a6" class="donut-slice"/>
+  <rect x="320" y="216" width="14" height="14" rx="3" fill="#14b8a6"/>
+  <text x="340" y="228" class="legend-text">Shopping (14%)</text>
+  <path d="M 124.92 42.90 A 110 110 0 0 1 150.00 40.00 L 150.00 90.00 A 60 60 0 0 0 136.32 91.58 Z" fill="#78716c" class="donut-slice"/>
+  <rect x="320" y="244" width="14" height="14" rx="3" fill="#78716c"/>
+  <text x="340" y="256" class="legend-text">Other (4%)</text>
+  <text x="150" y="144" text-anchor="middle" class="donut-center-line1">Total</text>
+  <text x="150" y="168" text-anchor="middle" class="donut-center-line2">₹133,585.00</text>
+</svg>
+</div>
+</section>
+<section class="details">
+<h2>Transaction Details</h2>
+<details class="cat-detail">
+  <summary style="border-left:4px solid #6366f1">Housing (2 items — ₹49,750.00)</summary>
+  <table>
+    <tr><th>Date</th><th>Description</th><th class="amt">Amount</th></tr>
+    <tr><td>2025-12-01</td><td>Home EMI December</td><td class="amt">₹44,250.00</td></tr>
+    <tr><td>2025-12-31</td><td>Property tax final quarter</td><td class="amt">₹5,500.00</td></tr>
+  </table>
+</details>
+<details class="cat-detail">
+  <summary style="border-left:4px solid #f59e0b">Food (5 items — ₹13,480.00)</summary>
+  <table>
+    <tr><th>Date</th><th>Description</th><th class="amt">Amount</th></tr>
+    <tr><td>2025-12-02</td><td>Grocery Christmas shopping</td><td class="amt">₹4,520.00</td></tr>
+    <tr><td>2025-12-05</td><td>Restaurant Christmas dinner</td><td class="amt">₹4,200.00</td></tr>
+    <tr><td>2025-12-13</td><td>Zomato party order</td><td class="amt">₹1,850.00</td></tr>
+    <tr><td>2025-12-16</td><td>Grocery holiday baking</td><td class="amt">₹2,230.00</td></tr>
+    <tr><td>2025-12-21</td><td>Cafe year end meetup</td><td class="amt">₹680.00</td></tr>
+  </table>
+</details>
+<details class="cat-detail">
+  <summary style="border-left:4px solid #10b981">Utilities (3 items — ₹4,088.00)</summary>
+  <table>
+    <tr><th>Date</th><th>Description</th><th class="amt">Amount</th></tr>
+    <tr><td>2025-12-03</td><td>Electricity bill Dec</td><td class="amt">₹1,890.00</td></tr>
+    <tr><td>2025-12-08</td><td>Mobile recharge plan change</td><td class="amt">₹599.00</td></tr>
+    <tr><td>2025-12-20</td><td>Internet fibre upgrade</td><td class="amt">₹1,599.00</td></tr>
+  </table>
+</details>
+<details class="cat-detail">
+  <summary style="border-left:4px solid #3b82f6">Transport (6 items — ₹14,430.00)</summary>
+  <table>
+    <tr><th>Date</th><th>Description</th><th class="amt">Amount</th></tr>
+    <tr><td>2025-12-04</td><td>Uber pool office commute</td><td class="amt">₹290.00</td></tr>
+    <tr><td>2025-12-11</td><td>Diesel SUV refill</td><td class="amt">₹5,800.00</td></tr>
+    <tr><td>2025-12-15</td><td>Parking airport long term</td><td class="amt">₹850.00</td></tr>
+    <tr><td>2025-12-19</td><td>Metro pass annual</td><td class="amt">₹4,800.00</td></tr>
+    <tr><td>2025-12-22</td><td>Travel train tickets holiday</td><td class="amt">₹2,350.00</td></tr>
+    <tr><td>2025-12-27</td><td>Toll expressway trip</td><td class="amt">₹340.00</td></tr>
+  </table>
+</details>
+<details class="cat-detail">
+  <summary style="border-left:4px solid #ef4444">Healthcare (3 items — ₹16,880.00)</summary>
+  <table>
+    <tr><th>Date</th><th>Description</th><th class="amt">Amount</th></tr>
+    <tr><td>2025-12-07</td><td>Pharmacy winter vitamins</td><td class="amt">₹880.00</td></tr>
+    <tr><td>2025-12-17</td><td>Doctor annual health checkup</td><td class="amt">₹3,500.00</td></tr>
+    <tr><td>2025-12-23</td><td>Insurance car renewal</td><td class="amt">₹12,500.00</td></tr>
+  </table>
+</details>
+<details class="cat-detail">
+  <summary style="border-left:4px solid #8b5cf6">Education (3 items — ₹7,420.00)</summary>
+  <table>
+    <tr><th>Date</th><th>Description</th><th class="amt">Amount</th></tr>
+    <tr><td>2025-12-10</td><td>School winter camp fees</td><td class="amt">₹3,500.00</td></tr>
+    <tr><td>2025-12-14</td><td>Books year end reading list</td><td class="amt">₹1,120.00</td></tr>
+    <tr><td>2025-12-24</td><td>Tuition extra classes</td><td class="amt">₹2,800.00</td></tr>
+  </table>
+</details>
+<details class="cat-detail">
+  <summary style="border-left:4px solid #ec4899">Entertainment (2 items — ₹4,298.00)</summary>
+  <table>
+    <tr><th>Date</th><th>Description</th><th class="amt">Amount</th></tr>
+    <tr><td>2025-12-06</td><td>Netflix plan upgrade</td><td class="amt">₹799.00</td></tr>
+    <tr><td>2025-12-25</td><td>Game console subscription</td><td class="amt">₹3,499.00</td></tr>
+  </table>
+</details>
+<details class="cat-detail">
+  <summary style="border-left:4px solid #14b8a6">Shopping (4 items — ₹18,349.00)</summary>
+  <table>
+    <tr><th>Date</th><th>Description</th><th class="amt">Amount</th></tr>
+    <tr><td>2025-12-09</td><td>Flipkart winter jacket</td><td class="amt">₹3,199.00</td></tr>
+    <tr><td>2025-12-18</td><td>Amazon holiday gifts</td><td class="amt">₹6,750.00</td></tr>
+    <tr><td>2025-12-26</td><td>Mall clothing year end sale</td><td class="amt">₹5,200.00</td></tr>
+    <tr><td>2025-12-29</td><td>Appliance mixer grinder</td><td class="amt">₹3,200.00</td></tr>
+  </table>
+</details>
+<details class="cat-detail">
+  <summary style="border-left:4px solid #78716c">Other (3 items — ₹4,890.00)</summary>
+  <table>
+    <tr><th>Date</th><th>Description</th><th class="amt">Amount</th></tr>
+    <tr><td>2025-12-12</td><td>Water purifier service</td><td class="amt">₹1,200.00</td></tr>
+    <tr><td>2025-12-28</td><td>Gas cylinder refill</td><td class="amt">₹940.00</td></tr>
+    <tr><td>2025-12-30</td><td>New year party supplies</td><td class="amt">₹2,750.00</td></tr>
+  </table>
+</details>
+</section>
+<footer>Generated by ExpenseTrackerProcessor on Mon Feb 23 20:12:25 IST 2026</footer>
+</main>
+</body>
+</html>

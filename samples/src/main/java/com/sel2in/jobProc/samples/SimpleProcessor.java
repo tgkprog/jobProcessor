@@ -1,4 +1,5 @@
 package com.sel2in.jobProc.samples;
+//com.sel2in.jobProc.samples.SimpleProcessor
 
 import com.sel2in.jobProc.processor.InputData;
 import com.sel2in.jobProc.processor.JobEstimate;

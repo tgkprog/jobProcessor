@@ -6,11 +6,129 @@
     <title>Job Tracking & Scheduling - Job Processor</title>
     <link rel="stylesheet" href="res/main.css">
     <script src="res/header.js"></script>
+    <style>
+        /* File upload zone */
+        .upload-zone {
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.3s, background 0.3s;
+            position: relative;
+        }
+
+        .upload-zone:hover,
+        .upload-zone.drag-over {
+            border-color: var(--accent);
+            background: #eaf4fd;
+        }
+
+        .upload-zone input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .upload-zone .icon {
+            font-size: 24px;
+        }
+
+        .upload-zone .label {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .file-list {
+            margin-top: 8px;
+            text-align: left;
+        }
+
+        .file-list .file-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #e8f4f8;
+            border-radius: 12px;
+            padding: 3px 10px;
+            font-size: 12px;
+            margin: 2px 4px 2px 0;
+        }
+
+        .file-list .file-item .remove-file {
+            cursor: pointer;
+            color: var(--danger);
+            font-weight: bold;
+            margin-left: 4px;
+        }
+
+        /* Inline file links in table */
+        .file-links {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .file-links a {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            font-size: 12px;
+            color: var(--accent);
+            text-decoration: none;
+            padding: 2px 6px;
+            background: #f0f7ff;
+            border-radius: 4px;
+            transition: background 0.2s;
+            white-space: nowrap;
+            max-width: 160px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-links a:hover {
+            background: #d6eaff;
+            text-decoration: underline;
+        }
+
+        .file-links .no-files {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* Delay row */
+        .delay-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .delay-row .form-group {
+            flex: 1;
+        }
+
+        /* Error info cell */
+        .error-info {
+            font-size: 11px;
+            color: var(--danger);
+            max-width: 180px;
+            word-break: break-word;
+        }
+
+        /* Server time */
+        .server-time {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin: 4px 0;
+        }
+    </style>
 </head>
 
 <body>
 
     <div class="container">
+        <p class="server-time" id="serverTimeTop"></p>
         <h1>Job Tracking & Scheduling</h1>
 
         <div class="section">
@@ -18,8 +136,9 @@
             <form id="scheduleJobForm">
                 <div class="form-group">
                     <label for="processorClassName">Processor Class</label>
-                    <input type="text" id="processorClassName" name="processorClassName"
-                        placeholder="e.g., com.sel2in.jobProc.processors.DateFileTxn" required>
+                    <select id="processorClassName" name="processorClassName" required onchange="onProcessorSelect()">
+                        <option value="">— Select a registered processor —</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label for="jobName">Job Name</label>
@@ -30,9 +149,13 @@
                     <input type="text" id="comment" name="comment" placeholder="Optional notes">
                 </div>
                 <div class="form-group">
-                    <label for="inputFiles">Input Files</label>
-                    <input type="file" id="inputFiles" name="files" multiple>
-                    <p class="hint">Upload one or more files for the processor.</p>
+                    <label>Input Files</label>
+                    <div class="upload-zone" id="uploadZone">
+                        <input type="file" id="inputFiles" name="files" multiple onchange="updateFileList()">
+                        <div class="icon">📁</div>
+                        <div class="label">Click or drag files here (CSV, TXT, etc.)</div>
+                    </div>
+                    <div class="file-list" id="fileList"></div>
                 </div>
 
                 <label>Earliest Run Time (delay from now)</label>
@@ -52,43 +175,111 @@
                 </div>
                 <p class="hint">Minimum delay is 30 seconds. Default: 1 minute.</p>
 
-                <button type="button" onclick="submitJob()">Schedule Job</button>
+                <button type="button" id="submitBtn" onclick="submitJob()" disabled>Schedule Job</button>
             </form>
         </div>
 
         <div class="section">
             <h2>Jobs</h2>
-            <table id="jobsStatusTable">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Name</th>
-                        <th>Processor</th>
-                        <th>Submitted</th>
-                        <th>Scheduled For</th>
-                        <th>Started</th>
-                        <th>Ended</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+            <div style="overflow-x:auto;">
+                <table id="jobsStatusTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Processor</th>
+                            <th>Submitted</th>
+                            <th>Scheduled</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                            <th>Input</th>
+                            <th>Output</th>
+                            <th>Started</th>
+                            <th>Ended</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
         </div>
+        <p class="server-time" id="serverTimeBottom"></p>
     </div>
 
     <script>
         const API_BASE = "/api/job";
 
         window.onload = function () {
-            const urlParams = new URLSearchParams(window.location.search);
-            const processor = urlParams.get('processor');
-            if (processor) {
-                document.getElementById('processorClassName').value = processor;
-                document.getElementById('jobName').value = "Run " + processor.split('.').pop();
-            }
+            loadProcessors().then(() => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const processor = urlParams.get('processor');
+                if (processor) {
+                    document.getElementById('processorClassName').value = processor;
+                    onProcessorSelect();
+                }
+            });
+
+            // Drag and drop
+            const zone = document.getElementById('uploadZone');
+            zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+            zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+            zone.addEventListener('drop', e => {
+                e.preventDefault();
+                zone.classList.remove('drag-over');
+                document.getElementById('inputFiles').files = e.dataTransfer.files;
+                updateFileList();
+            });
+
             refreshJobTable();
+            refreshServerTime();
         };
+
+        function loadProcessors() {
+            return fetch(API_BASE + '/listAll')
+                .then(res => res.json())
+                .then(procs => {
+                    const sel = document.getElementById('processorClassName');
+                    const btn = document.getElementById('submitBtn');
+                    if (!procs || procs.length === 0) {
+                        sel.innerHTML = '<option value="">No processors registered</option>';
+                        btn.disabled = true;
+                    } else {
+                        sel.innerHTML = '<option value="">— Select a processor —</option>';
+                        procs.forEach(p => {
+                            const opt = document.createElement('option');
+                            opt.value = p.className;
+                            opt.textContent = p.className.split('.').pop() + '  (' + p.className + ')';
+                            sel.appendChild(opt);
+                        });
+                        btn.disabled = false;
+                    }
+                })
+                .catch(() => { });
+        }
+
+        function onProcessorSelect() {
+            const sel = document.getElementById('processorClassName');
+            const jobNameInput = document.getElementById('jobName');
+            if (sel.value && !jobNameInput.value) {
+                jobNameInput.value = 'Run ' + sel.value.split('.').pop();
+            }
+        }
+
+        function updateFileList() {
+            const input = document.getElementById('inputFiles');
+            const listDiv = document.getElementById('fileList');
+            if (!input.files || input.files.length === 0) {
+                listDiv.innerHTML = '';
+                return;
+            }
+            let html = '';
+            for (let i = 0; i < input.files.length; i++) {
+                const f = input.files[i];
+                const sizeKB = (f.size / 1024).toFixed(1);
+                html += '<span class="file-item">📄 ' + f.name + ' (' + sizeKB + ' KB)'
+                    + '</span>';
+            }
+            listDiv.innerHTML = html;
+        }
 
         function submitJob() {
             const formData = new FormData();
@@ -113,6 +304,7 @@
                     alert("Job Scheduled!\nID: " + data.id + "\nRuns at: " + formatDateTime(data.scheduledRunTime));
                     refreshJobTable();
                     document.getElementById('scheduleJobForm').reset();
+                    document.getElementById('fileList').innerHTML = '';
                 })
                 .catch(err => alert("Error scheduling job: " + err));
         }
@@ -128,7 +320,7 @@
 
         function formatDateTime(dt) {
             if (!dt) return "-";
-            return dt.replace("T", " ").substring(0, 19);
+            return dt.replace("T", " ").substring(0, 16);
         }
 
         function cancelJob(jobId) {
@@ -150,33 +342,55 @@
                 .then(res => res.json())
                 .then(data => {
                     const tbody = document.querySelector("#jobsStatusTable tbody");
-                    tbody.innerHTML = "";
-                    data.sort((a, b) => b.id - a.id); // Show newest first
-                    data.forEach(job => {
-                        const row = tbody.insertRow();
-                        row.insertCell(0).innerText = job.id;
-                        row.insertCell(1).innerText = job.jobName;
-                        row.insertCell(2).innerText = (job.processorClassName || "").split('.').pop();
-                        row.insertCell(3).innerText = formatDateTime(job.jobSubmittedDateTime);
-                        row.insertCell(4).innerText = formatDateTime(job.scheduledRunTime);
-                        row.insertCell(5).innerText = formatDateTime(job.jobStartDateTime);
-                        row.insertCell(6).innerText = formatDateTime(job.jobEndDateTime);
+                    data.sort((a, b) => b.id - a.id);
 
-                        const statusCell = row.insertCell(7);
-                        statusCell.innerHTML = '<span class="status-' + job.status + '">' + job.status + '</span>';
+                    // Build a map of existing rows by job ID
+                    const existingRows = {};
+                    for (const row of tbody.rows) {
+                        const id = row.getAttribute('data-job-id');
+                        if (id) existingRows[id] = row;
+                    }
 
-                        const actionsCell = row.insertCell(8);
+                    const seen = new Set();
+                    data.forEach((job, idx) => {
+                        seen.add(String(job.id));
+                        let row = existingRows[String(job.id)];
+                        let isNew = false;
+
+                        if (!row) {
+                            row = tbody.insertRow(idx);
+                            row.setAttribute('data-job-id', job.id);
+                            for (let c = 0; c < 11; c++) row.insertCell(c);
+                            isNew = true;
+                        }
+
+                        // Reorder if needed
+                        if (tbody.rows[idx] !== row) {
+                            tbody.insertBefore(row, tbody.rows[idx]);
+                        }
+
+                        const cells = row.cells;
+                        // Only update text cells if value changed
+                        setCell(cells[0], job.id);
+                        setCell(cells[1], job.jobName);
+                        setCell(cells[2], (job.processorClassName || "").split('.').pop());
+                        setCell(cells[3], formatDateTime(job.jobSubmittedDateTime));
+                        setCell(cells[4], formatDateTime(job.scheduledRunTime));
+
+                        // Status
+                        const newStatus = '<span class="status-' + job.status + '">' + job.status + '</span>'
+                            + (job.errorReason ? '<div class="error-info" title="' + escHtml(job.errorReason) + '">'
+                                + truncate(job.errorReason, 60) + '</div>' : '');
+                        if (cells[5].innerHTML !== newStatus) cells[5].innerHTML = newStatus;
+
+                        // Actions (cell 6)
                         let actionsHtml = '';
                         if (job.status === 'SCHEDULED' || job.status === 'FAILED') {
                             let canRunNow = true;
                             if (job.status === 'SCHEDULED' && job.scheduledRunTime) {
-                                // Server time might differ, but local check is a good UX guide
-                                const scheduledTime = new Date(job.scheduledRunTime).getTime();
-                                const now = new Date().getTime();
-                                const diffSec = (scheduledTime - now) / 1000;
+                                const diffSec = (new Date(job.scheduledRunTime).getTime() - Date.now()) / 1000;
                                 if (diffSec < 20) canRunNow = false;
                             }
-
                             if (canRunNow) {
                                 actionsHtml += '<button class="btn-small btn-run" onclick="runNow(' + job.id + ')">Run Now</button> ';
                             } else {
@@ -186,12 +400,98 @@
                         if (job.status === 'RUNNING' || job.status === 'SCHEDULED') {
                             actionsHtml += '<button class="btn-small btn-danger" onclick="cancelJob(' + job.id + ')">Cancel</button>';
                         }
-                        actionsCell.innerHTML = actionsHtml;
+                        if (job.status === 'SUCCESS') {
+                            actionsHtml += '<a href="/dwn/' + job.id + '/" class="btn-small btn-run" style="display:inline-block;text-decoration:none;color:white;text-align:center;">📂 Files</a>';
+                        }
+                        if (cells[6].innerHTML !== actionsHtml) cells[6].innerHTML = actionsHtml;
+
+                        // Input/Output file links (cells 7, 8)
+                        if (isNew) {
+                            cells[7].innerHTML = '<div class="file-links" id="input-' + job.id + '"><span class="no-files">—</span></div>';
+                            cells[8].innerHTML = '<div class="file-links" id="output-' + job.id + '"><span class="no-files">—</span></div>';
+                        }
+                        if (job.status === 'SUCCESS' || job.status === 'FAILED') {
+                            loadJobFiles(job.id);
+                        }
+
+                        // Started / Ended (cells 9, 10)
+                        setCell(cells[9], formatDateTime(job.jobStartDateTime));
+                        setCell(cells[10], formatDateTime(job.jobEndDateTime));
                     });
+
+                    // Remove rows for jobs no longer in the list
+                    for (const id of Object.keys(existingRows)) {
+                        if (!seen.has(id)) existingRows[id].remove();
+                    }
                 });
         }
 
-        setInterval(refreshJobTable, 5000);
+        // Only update a cell's text if it actually changed
+        function setCell(cell, value) {
+            const s = String(value == null ? '-' : value);
+            if (cell.innerText !== s) cell.innerText = s;
+        }
+
+        function loadJobFiles(jobId) {
+            fetch(API_BASE + "/files/" + jobId)
+                .then(res => res.json())
+                .then(data => {
+                    // Input files
+                    const inputDiv = document.getElementById('input-' + jobId);
+                    if (inputDiv && data.inputFiles && data.inputFiles.length > 0) {
+                        let html = '';
+                        data.inputFiles.forEach(f => {
+                            html += '<a href="' + f.url + '" target="_blank" title="' + escHtml(f.name) + '">📄 ' + f.name + '</a>';
+                        });
+                        inputDiv.innerHTML = html;
+                    }
+
+                    // Output files
+                    const outputDiv = document.getElementById('output-' + jobId);
+                    if (outputDiv && data.outputFiles && data.outputFiles.length > 0) {
+                        let html = '';
+                        data.outputFiles.forEach(f => {
+                            html += '<a href="' + f.url + '" target="_blank" title="' + escHtml(f.name) + '">'
+                                + guessIcon(f.name) + ' ' + f.name + '</a>';
+                        });
+                        outputDiv.innerHTML = html;
+                    }
+                })
+                .catch(() => { }); // Silently fail for individual file lookups
+        }
+
+        function guessIcon(name) {
+            if (!name) return '📄';
+            const l = name.toLowerCase();
+            if (l.endsWith('.html') || l.endsWith('.htm')) return '🌐';
+            if (l.endsWith('.csv')) return '📊';
+            if (l.endsWith('.pdf')) return '📕';
+            if (l.endsWith('.png') || l.endsWith('.jpg')) return '🖼';
+            return '📄';
+        }
+
+        function escHtml(s) {
+            if (!s) return '';
+            return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function truncate(s, n) {
+            if (!s) return '';
+            return s.length > n ? s.substring(0, n) + '…' : s;
+        }
+
+        function refreshServerTime() {
+            fetch(API_BASE + '/serverTime')
+                .then(res => res.text())
+                .then(t => {
+                    const label = 'Server time: ' + t;
+                    document.getElementById('serverTimeTop').innerText = label;
+                    document.getElementById('serverTimeBottom').innerText = label;
+                })
+                .catch(() => { });
+        }
+
+        setInterval(() => { refreshJobTable(); refreshServerTime(); }, 5000);
     </script>
 
 </body>
