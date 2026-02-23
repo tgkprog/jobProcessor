@@ -94,7 +94,8 @@ public class JobEngine {
      */
     public String calculateTimeout(InputData inputData, String jarPath, String checksum) {
         try {
-            JobProcessor processor = processorLoader.load(jarPath, checksum);
+            String className = inputData.getProcessorClassName();
+            JobProcessor processor = processorLoader.load(jarPath, className, checksum);
             JobEstimate estimate = processor.reviewJob(inputData);
             long estimateMs = estimate.getMaxTimeToProcessMillis();
             long timeoutMs = (long) (estimateMs * 1.5);

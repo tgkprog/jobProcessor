@@ -73,6 +73,15 @@
             padding: 8px 10px;
         }
 
+        table td:nth-child(5),
+        table td:nth-child(6) {
+            font-size: 11px;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
         .table-section {
             margin-bottom: 20px;
         }
@@ -131,17 +140,19 @@
                 <table id="jobsTable" class="show-group-1">
                     <thead>
                         <tr>
-                            <th style="width: 50px;">ID</th>
-                            <th style="width: 180px;">Name</th>
+                            <th style="width: 45px;">ID</th>
+                            <th style="width: 160px;">Name</th>
                             <th class="col-group-1" style="width: 140px;">Processor</th>
                             <th class="col-group-1" style="width: 110px;">Status</th>
-                            <th class="col-group-1" style="width: 240px;">Input Files</th>
-                            <th class="col-group-1" style="width: 240px;">Output Files</th>
+                            <th class="col-group-1" style="width: 150px;">Comment</th>
+                            <th class="col-group-1" style="width: 200px;">Notes</th>
+                            <th class="col-group-1" style="width: 200px;">Input Files</th>
+                            <th class="col-group-1" style="width: 200px;">Output Files</th>
                             <th class="col-group-2" style="width: 170px;">Submitted (Timezone)</th>
                             <th class="col-group-2" style="width: 170px;">Scheduled</th>
                             <th class="col-group-2" style="width: 170px;">Started</th>
                             <th class="col-group-2" style="width: 170px;">Ended</th>
-                            <th style="width: 150px;">Actions</th>
+                            <th style="width: 135px;">Actions</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -251,13 +262,13 @@
                         if (!row) {
                             row = tbody.insertRow(idx);
                             row.setAttribute('data-job-id', job.id);
-                            // Create all cells: ID, Name, Processor, Status, Input, Output, Submitted, Scheduled, Started, Ended, Actions
-                            for (let c = 0; c < 11; c++) {
+                            // Create all cells: ID, Name, Processor, Status, Comment, Notes, Input, Output, Submitted, Scheduled, Started, Ended, Actions
+                            for (let c = 0; c < 13; c++) {
                                 const cell = row.insertCell(c);
                                 // Apply classes to group columns
-                                if (c === 2 || c === 3 || c === 4 || c === 5) {
+                                if (c === 2 || c === 3 || c === 4 || c === 5 || c === 6 || c === 7) {
                                     cell.classList.add('col-group-1');
-                                } else if (c === 6 || c === 7 || c === 8 || c === 9) {
+                                } else if (c === 8 || c === 9 || c === 10 || c === 11) {
                                     cell.classList.add('col-group-2');
                                 }
                             }
@@ -268,11 +279,11 @@
                         }
 
                         const cells = row.cells;
-                        // Always visible: ID (0), Name (1), Actions (10)
+                        // Always visible: ID (0), Name (1), Actions (12)
                         setCell(cells[0], job.id);
                         setCell(cells[1], job.jobName);
                         
-                        // Group 1: Processor (2), Status (3), Input (4), Output (5)
+                        // Group 1: Processor (2), Status (3), Comment (4), Notes (5), Input (6), Output (7)
                         setCell(cells[2], (job.processorClassName || "").split('.').pop());
                         
                         const newStatus = '<span class="status-' + job.status + '">' + job.status + '</span>'
@@ -280,22 +291,30 @@
                                 + truncate(job.errorReason, 60) + '</div>' : '');
                         if (cells[3].innerHTML !== newStatus) cells[3].innerHTML = newStatus;
 
+                        setCell(cells[4], job.comment || '-');
+                        
+                        const notesContent = job.notes || '-';
+                        if (cells[5].innerText !== notesContent) {
+                            cells[5].innerText = notesContent;
+                            cells[5].title = notesContent;
+                        }
+
                         // Input/Output files
                         if (isNew) {
-                            cells[4].innerHTML = '<div class="file-links" id="input-' + job.id + '"><span class="no-files">—</span></div>';
-                            cells[5].innerHTML = '<div class="file-links" id="output-' + job.id + '"><span class="no-files">—</span></div>';
+                            cells[6].innerHTML = '<div class="file-links" id="input-' + job.id + '"><span class="no-files">—</span></div>';
+                            cells[7].innerHTML = '<div class="file-links" id="output-' + job.id + '"><span class="no-files">—</span></div>';
                         }
                         if (job.status === 'SUCCESS' || job.status === 'FAILED') {
                             loadJobFiles(job.id);
                         }
 
-                        // Group 2: Submitted (6), Scheduled (7), Started (8), Ended (9)
-                        setCell(cells[6], formatDateTimeWithTZ(job.jobSubmittedDateTime));
-                        setCell(cells[7], formatDateTime(job.scheduledRunTime));
-                        setCell(cells[8], formatDateTime(job.jobStartDateTime));
-                        setCell(cells[9], formatDateTime(job.jobEndDateTime));
+                        // Group 2: Submitted (8), Scheduled (9), Started (10), Ended (11)
+                        setCell(cells[8], formatDateTimeWithTZ(job.jobSubmittedDateTime));
+                        setCell(cells[9], formatDateTime(job.scheduledRunTime));
+                        setCell(cells[10], formatDateTime(job.jobStartDateTime));
+                        setCell(cells[11], formatDateTime(job.jobEndDateTime));
 
-                        // Actions (10)
+                        // Actions (12)
                         let actionsHtml = '';
                         if (job.status === 'SCHEDULED' || job.status === 'FAILED') {
                             let canRunNow = true;
@@ -315,7 +334,7 @@
                         if (job.status === 'SUCCESS') {
                             actionsHtml += '<a href="/dwn/' + job.id + '/" class="btn-small btn-run" style="display:inline-block;text-decoration:none;color:white;text-align:center;">📂 Files</a>';
                         }
-                        if (cells[10].innerHTML !== actionsHtml) cells[10].innerHTML = actionsHtml;
+                        if (cells[12].innerHTML !== actionsHtml) cells[12].innerHTML = actionsHtml;
                     });
 
                     // Remove rows for jobs no longer in the list
