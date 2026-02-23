@@ -18,12 +18,14 @@
                 <div style="flex:1">
                     <label>Class Name</label>
                     <input type="text" id="className" placeholder="com.sel2in.jobProc.processors.MyProcessor">
+                    <input type="hidden" id="originalClassName" value="">
                 </div>
                 <div style="flex:1">
                     <label>Jar Path</label>
                     <input type="text" id="jarPath" placeholder="./processors/myproc.jar">
                 </div>
                 <button onclick="addOrUpdate()">Save</button>
+                <button onclick="clearForm()" style="background:#64748b">Clear</button>
             </div>
         </div>
 
@@ -68,9 +70,39 @@
         }
 
         function addOrUpdate() {
-            let className = document.getElementById("className").value;
-            let jarPath = document.getElementById("jarPath").value;
+            let className = document.getElementById("className").value.trim();
+            let jarPath = document.getElementById("jarPath").value.trim();
+            let originalClassName = document.getElementById("originalClassName").value;
 
+            // Validate className
+            if (!className) {
+                alert("Class Name cannot be empty");
+                return;
+            }
+            if (className.includes('/') || className.includes('\\') || className.includes('..')) {
+                alert("Class Name contains invalid characters (/, \\, ..)");
+                return;
+            }
+            if (!jarPath) {
+                alert("Jar Path cannot be empty");
+                return;
+            }
+
+            // If editing and className changed, delete the old one first
+            if (originalClassName && originalClassName !== className) {
+                fetch(API_BASE + "/remove/" + encodeURIComponent(originalClassName), { method: "DELETE" })
+                    .then(() => {
+                        saveProcessor(className, jarPath);
+                    })
+                    .catch(err => {
+                        alert("Error removing old processor: " + err);
+                    });
+            } else {
+                saveProcessor(className, jarPath);
+            }
+        }
+
+        function saveProcessor(className, jarPath) {
             fetch(API_BASE + "/add", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -82,13 +114,22 @@
                 .then(res => res.text())
                 .then(msg => {
                     alert(msg);
+                    clearForm();
                     loadJobs();
-                });
+                })
+                .catch(err => alert("Error: " + err));
+        }
+
+        function clearForm() {
+            document.getElementById("className").value = "";
+            document.getElementById("jarPath").value = "";
+            document.getElementById("originalClassName").value = "";
         }
 
         function editJob(className, jarPath) {
             document.getElementById("className").value = className;
             document.getElementById("jarPath").value = jarPath;
+            document.getElementById("originalClassName").value = className;
         }
 
         function scheduleJob(className) {

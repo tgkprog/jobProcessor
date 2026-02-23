@@ -1,8 +1,10 @@
 package com.sel2in.jobProc.controller;
 
 import com.sel2in.jobProc.entity.InputDataFile;
+import com.sel2in.jobProc.entity.InputDataParam;
 import com.sel2in.jobProc.entity.JobRecord;
 import com.sel2in.jobProc.repo.InputDataFileRepository;
+import com.sel2in.jobProc.repo.InputDataParamRepository;
 import com.sel2in.jobProc.repo.JobRepository;
 import com.sel2in.jobProc.service.JobExecutionService;
 import com.sel2in.jobProc.service.ScheduledJobTrigger;
@@ -15,6 +17,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -37,6 +40,7 @@ public class JobController {
 
     private final JobRepository jobRepository;
     private final InputDataFileRepository inputDataFileRepository;
+    private final InputDataParamRepository inputDataParamRepository;
     private final Scheduler quartzScheduler;
     private final JobExecutionService jobExecutionService;
     private final com.sel2in.jobProc.service.JobEngine jobEngine;
@@ -47,7 +51,9 @@ public class JobController {
     @GetMapping("/serverTime")
     @ResponseBody
     public String serverTime() {
-        return LocalDateTime.now().toString().replace("T", " ").substring(0, 19);
+        String dateTime = LocalDateTime.now().toString().replace("T", " ").substring(0, 19);
+        String timeZone = java.time.ZoneId.systemDefault().getId();
+        return dateTime + " " + timeZone;
     }
 
     @GetMapping("/status")
@@ -109,6 +115,7 @@ public class JobController {
             @RequestParam(defaultValue = "0") int delayDays,
             @RequestParam(defaultValue = "0") int delayHours,
             @RequestParam(defaultValue = "1") int delayMinutes,
+            @RequestParam(required = false) String inputData,
             @RequestParam(required = false) List<MultipartFile> files) throws IOException {
 
         // Input validation
@@ -117,6 +124,9 @@ public class JobController {
         }
         if (processorClassName == null || processorClassName.trim().isEmpty()) {
             throw new IllegalArgumentException("processorClassName cannot be empty");
+        }
+        if (processorClassName.contains("/") || processorClassName.contains("\\") || processorClassName.contains("..")) {
+            throw new IllegalArgumentException("processorClassName contains invalid characters (/, \\, ..)");
         }
         if (delayDays < 0) delayDays = 0;
         if (delayHours < 0) delayHours = 0;
@@ -163,6 +173,31 @@ public class JobController {
             }
         }
 
+        // Handle Input Parameters JSON
+        if (inputData != null && !inputData.trim().isEmpty()) {
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                Map<String, Object> params = mapper.readValue(inputData, Map.class);
+                for (Map.Entry<String, Object> entry : params.entrySet()) {
+                    InputDataParam param = new InputDataParam();
+                    param.setInputDataId(job.getId());
+                    param.setParamName(entry.getKey());
+                    Object value = entry.getValue();
+                    if (value instanceof Number) {
+                        param.setParamType("NUMBER");
+                        param.setNumberValue(((Number) value).doubleValue());
+                    } else {
+                        param.setParamType("STRING");
+                        param.setStringValue(value.toString());
+                    }
+                    inputDataParamRepository.save(param);
+                    log.info("Saved input param: {}={} for job {}", entry.getKey(), value, job.getId());
+                }
+            } catch (Exception e) {
+                log.warn("Failed to parse inputData JSON for job {}: {}", job.getId(), e.getMessage());
+            }
+        }
+
         long delaySec = ChronoUnit.SECONDS.between(now, runAt);
         log.info("Job {} '{}' will run in {}s at {}", job.getId(), jobName, delaySec, runAt);
 
@@ -180,9 +215,9 @@ public class JobController {
     }
 
     /**
-     * Manual trigger: reschedule a job to run in 10 seconds.
+     * Manual trigger: reschedule a job to run in 3 seconds.
      * Only allowed if the job is SCHEDULED and its current scheduled time is 
-     * more than 20 seconds away (handled primarily by UI, but enforced here).
+     * more than 5 seconds away (handled primarily by UI, but enforced here).
      */
     @GetMapping("/run")
     public String runNow(@RequestParam Long jobId) {
@@ -194,7 +229,7 @@ public class JobController {
         }
 
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime runAt = now.plusSeconds(10);
+        LocalDateTime runAt = now.plusSeconds(3);
 
         // Update DB
         job.setStatus("SCHEDULED");
@@ -214,7 +249,7 @@ public class JobController {
             return "Error rescheduling job: " + e.getMessage();
         }
 
-        return "Job " + jobId + " rescheduled to run in 10 seconds";
+        return "Job " + jobId + " rescheduled to run in 3 seconds";
     }
 
     private void scheduleQuartzJob(Long jobId, LocalDateTime runAt) throws SchedulerException {

@@ -72,13 +72,42 @@ public class ExpenseTrackerProcessor implements JobProcessor {
 
     @Override
     public JobEstimate reviewJob(InputData inputData) {
-        // Generous 60-second estimate for large files
-        return new JobEstimate(60_000);
+        long baseEstimateMs = 60_000; // 60 seconds base
+        
+        // Add 105% of sleep parameter if present
+        Map<String, Object> params = inputData.getParameters();
+        if (params != null && params.containsKey("sleep")) {
+            try {
+                long sleepMs = Long.parseLong(params.get("sleep").toString());
+                long sleepOverhead = (long)(sleepMs * 1.05);
+                baseEstimateMs += sleepOverhead;
+                System.out.println("ExpenseTracker: Added " + sleepOverhead + "ms (105% of sleep) to estimate");
+            } catch (NumberFormatException e) {
+                // Ignore invalid sleep values
+            }
+        }
+        
+        return new JobEstimate(baseEstimateMs);
     }
 
     @Override
     public OutputData processJob(InputData inputData) {
+        System.out.println("═══════════════════════════════════════════════════════");
+        System.out.println("ExpenseTrackerProcessor VERSION 001");
+        System.out.println("═══════════════════════════════════════════════════════");
         System.out.println("ExpenseTracker: Starting expense analysis for job: " + inputData.getJobName());
+        
+        // Debug: Print input parameters
+        Map<String, Object> inputParams = inputData.getParameters();
+        System.out.println("ExpenseTracker: Checking for input parameters...");
+        if (inputParams != null && !inputParams.isEmpty()) {
+            System.out.println("ExpenseTracker: Received " + inputParams.size() + " input parameter(s):");
+            for (Map.Entry<String, Object> entry : inputParams.entrySet()) {
+                System.out.println("  - " + entry.getKey() + " = " + entry.getValue() + " (" + entry.getValue().getClass().getSimpleName() + ")");
+            }
+        } else {
+            System.out.println("ExpenseTracker: No input parameters received.");
+        }
 
         OutputData output = new OutputData();
         output.setInputDataId(inputData.getInputDataId());
@@ -153,28 +182,23 @@ public class ExpenseTrackerProcessor implements JobProcessor {
             output.setOutputParameters(params);
 
             // ── 6. Optional sleep if 'sleep' parameter is provided ──
-            try {
-                Map<String, Object> inputParams = inputData.getParameters();
-                if (inputParams != null && inputParams.containsKey("sleep")) {
-                    Object sleepObj = inputParams.get("sleep");
-                    if (sleepObj != null) {
-                        try {
-                            long sleepMs = Long.parseLong(sleepObj.toString());
-                            if (sleepMs > 0) {
-                                double sleepSec = sleepMs / 1000.0;
-                                System.err.println(String.format("⚠️  WARNING: Sleeping for %.2f seconds (%d ms) before completion", sleepSec, sleepMs));
-                                Thread.sleep(sleepMs);
-                            }
-                        } catch (NumberFormatException nfe) {
-                            // Ignore if not a valid number
+            if (inputParams != null && inputParams.containsKey("sleep")) {
+                Object sleepObj = inputParams.get("sleep");
+                if (sleepObj != null) {
+                    try {
+                        long sleepMs = Long.parseLong(sleepObj.toString());
+                        if (sleepMs > 0) {
+                            double sleepSec = sleepMs / 1000.0;
+                            System.err.println(String.format("⚠️  WARNING: Sleeping for %.2f seconds (%d ms) before completion", sleepSec, sleepMs));
+                            Thread.sleep(sleepMs);
                         }
+                    } catch (NumberFormatException nfe) {
+                        System.err.println("⚠️  WARNING: 'sleep' parameter value is not a valid number: " + sleepObj);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        System.err.println("Sleep interrupted");
                     }
                 }
-            } catch (InterruptedException ie) {
-                Thread.currentThread().interrupt();
-                System.err.println("Sleep interrupted");
-            } catch (Exception sleepEx) {
-                // Silently ignore sleep errors
             }
 
         } catch (Exception ex) {

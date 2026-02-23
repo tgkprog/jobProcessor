@@ -75,6 +75,7 @@ public class JobEngine {
 
     /**
      * Submits a job for asynchronous execution and tracks it.
+     * Returns a future that includes timeout information.
      */
     public CompletableFuture<OutputData> executeAsync(InputData inputData, String jarPath, String checksum) {
         Long jobId = inputData.getInputDataId();
@@ -85,6 +86,23 @@ public class JobEngine {
             future.whenComplete((result, ex) -> activeJobs.remove(jobId));
         }
         return future;
+    }
+
+    /**
+     * Calculate timeout for a job based on processor estimate.
+     * @return timeout info string for logging/notes
+     */
+    public String calculateTimeout(InputData inputData, String jarPath, String checksum) {
+        try {
+            JobProcessor processor = processorLoader.load(jarPath, checksum);
+            JobEstimate estimate = processor.reviewJob(inputData);
+            long estimateMs = estimate.getMaxTimeToProcessMillis();
+            long timeoutMs = (long) (estimateMs * 1.5);
+            return String.format("Estimate: %dms, Timeout: %dms (150%%)", estimateMs, timeoutMs);
+        } catch (Exception e) {
+            log.warn("Could not calculate timeout for job {}: {}", inputData.getJobName(), e.getMessage());
+            return "Timeout calculation failed";
+        }
     }
 
     /**

@@ -1,12 +1,14 @@
 package com.sel2in.jobProc.service;
 
 import com.sel2in.jobProc.entity.InputDataFile;
+import com.sel2in.jobProc.entity.InputDataParam;
 import com.sel2in.jobProc.entity.JobError;
 import com.sel2in.jobProc.entity.JobRecord;
 import com.sel2in.jobProc.entity.ProcessorDefinition;
 import com.sel2in.jobProc.processor.InputData;
 import com.sel2in.jobProc.processor.OutputData;
 import com.sel2in.jobProc.repo.InputDataFileRepository;
+import com.sel2in.jobProc.repo.InputDataParamRepository;
 import com.sel2in.jobProc.repo.JobErrorRepository;
 import com.sel2in.jobProc.repo.JobRepository;
 import com.sel2in.jobProc.repo.ProcessorRepository;
@@ -16,7 +18,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -32,6 +36,7 @@ public class JobExecutionService {
     private final JobRepository jobRepository;
     private final ProcessorRepository processorRepository;
     private final InputDataFileRepository inputDataFileRepository;
+    private final InputDataParamRepository inputDataParamRepository;
     private final JobErrorRepository jobErrorRepository;
     private final JobEngine jobEngine;
 
@@ -92,6 +97,32 @@ public class JobExecutionService {
             inputData.setInputFiles(filePaths);
             log.info("Attached {} input files to job {}", filePaths.size(), job.getId());
         }
+
+        // Attach input parameters
+        List<InputDataParam> dbParams = inputDataParamRepository.findByInputDataId(job.getId());
+        if (dbParams != null && !dbParams.isEmpty()) {
+            Map<String, Object> params = new HashMap<>();
+            for (InputDataParam param : dbParams) {
+                Object value;
+                if ("NUMBER".equals(param.getParamType()) && param.getNumberValue() != null) {
+                    value = param.getNumberValue();
+                } else if (param.getStringValue() != null) {
+                    value = param.getStringValue();
+                } else {
+                    value = param.getObjectJson();
+                }
+                params.put(param.getParamName(), value);
+            }
+            inputData.setParameters(params);
+            log.info("Attached {} input parameters to job {}", params.size(), job.getId());
+        }
+
+        // Calculate and log timeout before execution
+        String timeoutInfo = jobEngine.calculateTimeout(inputData, jarPath, checksum);
+        log.info("Job {} timeout info: {}", jobId, timeoutInfo);
+        String currentNotes = job.getNotes() != null ? job.getNotes() + " | " : "";
+        job.setNotes(currentNotes + timeoutInfo);
+        jobRepository.save(job);
 
         // Execute async and update DB when done
         jobEngine.executeAsync(inputData, jarPath, checksum).thenAccept(output -> {

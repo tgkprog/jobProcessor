@@ -90,6 +90,39 @@
             width: 100%;
             box-sizing: border-box;
         }
+
+        .success-message {
+            display: none;
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        .success-message h3 {
+            margin: 0 0 8px 0;
+            color: #155724;
+        }
+
+        .success-message p {
+            margin: 4px 0;
+            color: #155724;
+        }
+
+        .success-message a {
+            color: #0066cc;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .success-message a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 
@@ -97,6 +130,13 @@
 
     <div class="container">
         <h1>Schedule New Job <a href="jobs.html" style="font-size: 14px; margin-left: 15px;">📋 View Jobs</a></h1>
+
+        <div class="success-message" id="successMessage">
+            <h3>✅ Job Scheduled Successfully!</h3>
+            <p><strong>Job ID:</strong> <span id="jobId"></span></p>
+            <p><strong>Scheduled Run Time:</strong> <span id="scheduledTime"></span></p>
+            <p><a href="jobs.html" id="viewJobLink">→ View Job Status</a></p>
+        </div>
 
         <div class="section">
             <form id="scheduleJobForm">
@@ -279,11 +319,12 @@
             fetch(API_BASE + "/schedule", { method: 'POST', body: formData })
                 .then(res => res.json())
                 .then(data => {
-                    alert("Job Scheduled!\nID: " + data.id + "\nRuns at: " + data.scheduledRunTime.replace("T", " ").substring(0, 16));
+                    document.getElementById('jobId').textContent = data.id;
+                    document.getElementById('scheduledTime').textContent = data.scheduledRunTime.replace("T", " ").substring(0, 16);
+                    document.getElementById('successMessage').classList.add('show');
                     document.getElementById('scheduleJobForm').reset();
                     document.getElementById('fileList').innerHTML = '';
-                    // Offer to go to jobs page
-                    if (confirm("View job status?")) window.location.href = 'jobs.html';
+                    window.scrollTo(0, 0);
                 })
                 .catch(err => alert("Error scheduling job: " + err));
         }

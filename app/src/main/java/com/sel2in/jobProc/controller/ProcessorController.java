@@ -33,7 +33,17 @@ public class ProcessorController {
 
     @PostMapping("/add")
     public String add(@RequestBody ProcessorDefinition definition) {
-        processorRepository.findByClassName(definition.getClassName()).ifPresent(existing -> {
+        String className = definition.getClassName();
+        
+        // Validate className
+        if (className == null || className.trim().isEmpty()) {
+            return "Error: className cannot be empty";
+        }
+        if (className.contains("/") || className.contains("\\") || className.contains("..")) {
+            return "Error: className contains invalid characters (/, \\, ..)";
+        }
+        
+        processorRepository.findByClassName(className).ifPresent(existing -> {
             definition.setCreatedTs(existing.getCreatedTs());
         });
         processorRepository.save(definition);
@@ -52,6 +62,14 @@ public class ProcessorController {
                             @RequestParam String className) throws IOException, NoSuchAlgorithmException {
         if (file.isEmpty()) {
             return "Error: no file uploaded";
+        }
+
+        // Validate className
+        if (className == null || className.trim().isEmpty()) {
+            return "Error: className cannot be empty";
+        }
+        if (className.contains("/") || className.contains("\\") || className.contains("..")) {
+            return "Error: className contains invalid characters (/, \\, ..)";
         }
 
         String originalName = file.getOriginalFilename();

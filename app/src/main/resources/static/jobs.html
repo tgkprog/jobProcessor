@@ -301,10 +301,10 @@
                             let canRunNow = true;
                             if (job.status === 'SCHEDULED' && job.scheduledRunTime) {
                                 const diffSec = (new Date(job.scheduledRunTime).getTime() - Date.now()) / 1000;
-                                if (diffSec < 20) canRunNow = false;
+                                if (diffSec < 5) canRunNow = false;
                             }
                             if (canRunNow) {
-                                actionsHtml += '<button class="btn-small btn-run" onclick="runNow(' + job.id + ')">Run Now</button> ';
+                                actionsHtml += '<button class="btn-small btn-run" onclick="runNow(' + job.id + ')">Run in 3s</button> ';
                             } else {
                                 actionsHtml += '<span class="hint">Starting soon...</span> ';
                             }
@@ -382,10 +382,8 @@
             fetch(API_BASE + '/serverTime')
                 .then(res => res.text())
                 .then(t => {
-                    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-                    const label = 'Server time: ' + t + ' | Your timezone: ' + tz;
-                    document.getElementById('serverTimeTop').innerText = label;
-                    document.getElementById('serverTimeBottom').innerText = label;
+                    document.getElementById('serverTimeTop').innerText = t;
+                    document.getElementById('serverTimeBottom').innerText = t;
                 })
                 .catch(() => { });
         }
