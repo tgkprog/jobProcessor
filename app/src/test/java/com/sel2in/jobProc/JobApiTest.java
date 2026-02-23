@@ -183,7 +183,7 @@ public class JobApiTest {
         ResponseEntity<String> resp = rest.getForEntity(
                 url("/api/job/run?jobId=1"), String.class);
         assertEquals(HttpStatus.OK, resp.getStatusCode());
-        assertTrue(resp.getBody().contains("triggered"));
+        assertTrue(resp.getBody().contains("rescheduled"));
     }
 
     // ============================
