@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimal Job Scheduler</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Outfit:wght@400;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Job Scheduler</h1>
+            <p class="subtitle">Minimal Control Panel</p>
+        </header>
+
+        <main>
+            <section class="status-card">
+                <div class="card-header">
+                    <h2>Current Status</h2>
+                    <div id="status-badge" class="badge">Loading...</div>
+                </div>
+                <div class="status-details">
+                    <p><strong>Scheduled Time:</strong> <span id="scheduled-time">None</span></p>
+                    <p><strong>Server Timezone:</strong> <span id="server-timezone">-</span></p>
+                </div>
+                <div class="actions">
+                    <button id="refresh-btn" class="btn btn-secondary">Refresh</button>
+                    <div class="auto-refresh-container">
+                        <input type="checkbox" id="auto-refresh" checked>
+                        <label for="auto-refresh">Auto (7s)</label>
+                    </div>
+                    <button id="cancel-btn" class="btn btn-danger">Clear / Cancel</button>
+                </div>
+            </section>
+
+            <section class="control-card">
+                <h2>Set New Schedule</h2>
+                <div class="form-group">
+                    <label for="schedule-datetime">Date & Time</label>
+                    <input type="datetime-local" id="schedule-datetime">
+                </div>
+                <div class="form-group">
+                    <label for="sleep">Sleep (seconds)</label>
+                    <input type="number" id="sleep" value="20" min="1">
+                </div>
+                <div class="form-group">
+                    <label for="random-sleep">Random Sleep (max seconds)</label>
+                    <input type="number" id="random-sleep" value="0" min="0">
+                </div>
+                <button id="set-schedule-btn" class="btn btn-primary">Set Schedule</button>
+            </section>
+
+            <section class="history-card" id="history-section" style="display: none;">
+                <h2>History</h2>
+                <div class="history-list">
+                    <table id="history-table">
+                        <thead>
+                            <tr>
+                                <th>Scheduled</th>
+                                <th>Status</th>
+                                <th>Error</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-body">
+                            <!-- History items will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 Job Processor SmallApp</p>
+        </footer>
+    </div>
+    <script src="script.js"></script>
+</body>
+
+</html>

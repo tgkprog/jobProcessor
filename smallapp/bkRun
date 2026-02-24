@@ -1,0 +1,9 @@
+#!/bin/bash
+# Background run script for SmallApp
+# Logs are handled by Spring Boot properties to logs/smallapp.log with rotation
+
+mkdir -p logs
+echo "Starting SmallApp in background with sudo..."
+sudo nohup java -jar target/smallapp-0.0.1-SNAPSHOT.jar > /dev/null 2>&1 &
+echo "SmallApp started. PID: $!"
+echo "Check logs/smallapp.log for output."

@@ -1,26 +1,21 @@
 #!/bin/bash
 
-# Build and Run Script for Job Processor
-# Author: Tushar Kapila
+# Build and Run Script for SmallApp
+# Author: Tushar Kapila (Adapted for SmallApp)
 
 APP_PROPS="src/main/resources/application.properties"
 VER_DATE="src/main/resources/verDate.txt"
-JAR_FAT="target/jobProc-1.0.0-fat.jar"
-JAR_SLIM="target/jobProc-1.0.0.jar"
+JAR_FAT="target/smallapp-0.0.1-SNAPSHOT.jar"
 BIN_DIR="bin"
-BIN_JAR_FAT="$BIN_DIR/jobProc-fat.jar"
-BIN_JAR_SLIM="$BIN_DIR/jobProc.jar"
-MAIN_CLASS="com.sel2in.jobProc.JobProcApp"
-
-
+BIN_JAR="$BIN_DIR/smallapp.jar"
+MAIN_CLASS="com.example.smallapp.SmallAppApplication"
 
 usage() {
     echo "Usage: ./build [params]"
     echo "Params:"
     echo "  c    : mvn clean"
-    echo "  p    : mvn install and copy to bin"
-    echo "  rf   : stop old, run fat jar from bin"
-    echo "  rs   : stop old, run slim jar from bin"
+    echo "  p    : mvn package and copy to bin"
+    echo "  r    : stop old, run jar from bin"
     echo "  ver  : print usage and version and exit"
     echo "  ver1 : increase patch version (x.y.Z)"
     echo "  ver2 : increase minor version (x.Y.z)"
@@ -31,7 +26,7 @@ get_version() {
     if [ -f "$APP_PROPS" ]; then
         grep "app.version=" "$APP_PROPS" | cut -d'=' -f2
     else
-        echo "1.0.0"
+        echo "0.0.1"
     fi
 }
 
@@ -91,39 +86,26 @@ for arg in "$@"; do
             ;;
         p)
             prepare_resources
-            echo "Running mvn install..."
-            if mvn install; then
+            echo "Running mvn package..."
+            if mvn package -DskipTests; then
                 mkdir -p "$BIN_DIR"
-                cp "$JAR_FAT" "$BIN_JAR_FAT"
-                cp "$JAR_SLIM" "$BIN_JAR_SLIM"
-                echo "Copied to bin/"
+                cp "$JAR_FAT" "$BIN_JAR"
+                echo "Copied to $BIN_JAR"
             else
                 echo "Build failed!"
                 exit 1
             fi
             ;;
-        rf)
+        r)
             if [ -f "./kil" ]; then
                 echo "Stopping old instances..."
                 ./kil
             fi
-            echo "Running fat jar from bin..."
-            if [ -f "$BIN_JAR_FAT" ]; then
-                java -jar "$BIN_JAR_FAT"
+            echo "Running jar from bin..."
+            if [ -f "$BIN_JAR" ]; then
+                java -jar "$BIN_JAR"
             else
-                echo "Error: $BIN_JAR_FAT not found. Run 'p' first."
-            fi
-            ;;
-        rs)
-            if [ -f "./kil" ]; then
-                echo "Stopping old instances..."
-                ./kil
-            fi
-            echo "Running slim jar from bin..."
-            if [ -f "$BIN_JAR_SLIM" ]; then
-                java -cp "$BIN_JAR_SLIM:target/lib/*" "$MAIN_CLASS"
-            else
-                echo "Error: $BIN_JAR_SLIM not found. Run 'p' first."
+                echo "Error: $BIN_JAR not found. Run 'p' first."
             fi
             ;;
         ver)

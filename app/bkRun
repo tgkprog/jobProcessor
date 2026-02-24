@@ -1,0 +1,9 @@
+#!/bin/bash
+# Background run script for Job Processor
+# Logs are handled by Spring Boot properties to logs/jobProc.log with rotation
+
+mkdir -p logs
+echo "Starting Job Processor in background with sudo..."
+sudo nohup java -jar target/jobProc-1.0.0-fat.jar > /dev/null 2>&1 &
+echo "Job Processor started. PID: $!"
+echo "Check logs/jobProc.log for output."

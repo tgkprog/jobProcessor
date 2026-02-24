@@ -1,0 +1,39 @@
+#!/bin/bash
+# Kill script for Job Processor
+# Searches for PID by main class name
+
+SEARCH_PATTERN="JobProcApp|jobProc-fat.jar|jobProc.jar|jobProc-1.0.0-fat.jar"
+echo "Searching for processes with pattern: $SEARCH_PATTERN"
+
+# Find PIDs, sort them, and grep for the pattern specifically
+PIDS=$(sudo ps aux | grep -E "$SEARCH_PATTERN" | grep -v grep | awk '{print $2}' | sort -n)
+
+if [ -z "$PIDS" ]; then
+    echo "No matching processes found."
+    exit 0
+fi
+
+echo "Found PIDs: $PIDS"
+
+echo "Sending SIGTERM (kill -15) to all instances..."
+sudo kill -15 $PIDS
+
+# Wait for graceful shutdown
+echo "Waiting 3 seconds for graceful shutdown..."
+sleep 3
+
+# Check if any still exist
+STILL_RUNNING=$(sudo ps -A -o pid,command | grep -E "$SEARCH_PATTERN" | grep -v grep | awk '{print $1}')
+
+if [ -n "$STILL_RUNNING" ]; then
+    echo "Processes still running: $STILL_RUNNING"
+    echo "Forcing SIGKILL (kill -9)..."
+    for pid in $STILL_RUNNING; do
+        if [[ $pid =~ ^[0-9]+$ ]]; then
+            sudo kill -9 $pid
+        fi
+    done
+    echo "Killed."
+else
+    echo "All processes terminated gracefully."
+fi

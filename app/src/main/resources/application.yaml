@@ -31,3 +31,12 @@ jobproc:
   processorJarDirectory: ./processors
   inputFileDirectory: ./inputFiles
   outputFileDirectory: ./outputFiles
+
+logging:
+  file:
+    name: logs/jobProc.log
+  logback:
+    rollingpolicy:
+      max-file-size: 6MB
+      file-name-pattern: logs/jobProc-%d{yyyy-MM-dd-HH}.%i.log
+      clean-history-on-start: true
