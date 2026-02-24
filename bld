@@ -1,0 +1,9 @@
+cd app
+./build c p
+cd ../samples
+./build c p
+	
+cd ../smallapp/
+./build c p
+cd ../app
+./build rf

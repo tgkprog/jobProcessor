@@ -20,6 +20,21 @@ usage() {
     echo "  ver1 : increase patch version (x.y.Z)"
     echo "  ver2 : increase minor version (x.Y.z)"
     echo "  ver3 : increase major version (X.y.z)"
+    echo "  logDel: clean logs older than 20 days"
+}
+
+compile_util() {
+    mkdir -p "$BIN_DIR"
+    if [ -f "../misc/LogCleaner.java" ]; then
+        javac -d "$BIN_DIR" ../misc/LogCleaner.java
+    fi
+}
+
+log_del() {
+    compile_util
+    if [ -d "logs" ]; then
+        java -cp "$BIN_DIR" LogCleaner logs 20
+    fi
 }
 
 get_version() {
@@ -70,6 +85,7 @@ prepare_resources() {
     # Requirement: set the verDate.txt with current date, time and time zone
     date +"%Y-%m-%d %H:%M:%S %Z" > "$VER_DATE"
     echo "Updated $VER_DATE"
+    log_del
 }
 
 if [ $# -eq 0 ]; then
@@ -126,6 +142,9 @@ for arg in "$@"; do
             ;;
         ver3)
             update_version 0
+            ;;
+        logDel)
+            log_del
             ;;
         *)
             echo "Unknown parameter: $arg"

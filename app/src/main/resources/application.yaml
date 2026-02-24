@@ -37,6 +37,7 @@ logging:
     name: logs/jobProc.log
   logback:
     rollingpolicy:
-      max-file-size: 6MB
-      file-name-pattern: logs/jobProc-%d{yyyy-MM-dd-HH}.%i.log
+      max-file-size: 5MB
+      file-name-pattern: logs/jobProc-%d{yyyy-MM-dd}.%i.log
+      max-history: 20
       clean-history-on-start: true

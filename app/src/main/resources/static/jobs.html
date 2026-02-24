@@ -135,6 +135,21 @@
             <h3>
                 Jobs
                 <button class="toggle-btn" id="toggleBtn" onclick="toggleColumns()">›</button>
+                <div
+                    style="font-size: 13px; font-weight: normal; margin-left: 20px; display: inline-flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" id="autoRefreshCheck" onchange="handleAutoRefreshChange()">
+                    <label for="autoRefreshCheck">Auto Refresh</label>
+                    <select id="refreshInterval" onchange="handleIntervalChange()">
+                        <option value="5000">5s</option>
+                        <option value="10000">10s</option>
+                        <option value="15000">15s</option>
+                        <option value="30000">30s</option>
+                        <option value="45000">45s</option>
+                        <option value="60000">1m</option>
+                        <option value="120000">2m</option>
+                        <option value="300000">5m</option>
+                    </select>
+                </div>
             </h3>
             <div style="overflow-x:auto;">
                 <table id="jobsTable" class="show-group-1">
@@ -144,12 +159,12 @@
                             <th style="width: 160px;">Name</th>
                             <th class="col-group-1" style="width: 140px;">Processor</th>
                             <th class="col-group-1" style="width: 110px;">Status</th>
-                            <th class="col-group-1" style="width: 150px;">Comment</th>
+                            <th class="col-group-1" style="width: 170px;">Scheduled</th>
                             <th class="col-group-1" style="width: 200px;">Notes</th>
                             <th class="col-group-1" style="width: 200px;">Input Files</th>
                             <th class="col-group-1" style="width: 200px;">Output Files</th>
                             <th class="col-group-2" style="width: 170px;">Submitted (Timezone)</th>
-                            <th class="col-group-2" style="width: 170px;">Scheduled</th>
+                            <th class="col-group-2" style="width: 150px;">Comment</th>
                             <th class="col-group-2" style="width: 170px;">Started</th>
                             <th class="col-group-2" style="width: 170px;">Ended</th>
                             <th style="width: 135px;">Actions</th>
@@ -165,11 +180,68 @@
     <script>
         const API_BASE = "/api/job";
         let currentView = 1; // 1 or 2
+        let refreshTimer = null;
 
         window.onload = function () {
             refreshJobTable();
             refreshServerTime();
+            initAutoRefresh();
         };
+
+        function setCookie(name, value, days) {
+            const d = new Date();
+            d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+            let expires = "expires=" + d.toUTCString();
+            document.cookie = name + "=" + value + ";" + expires + ";path=/";
+        }
+
+        function getCookie(name) {
+            let nameEQ = name + "=";
+            let ca = document.cookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+
+        function initAutoRefresh() {
+            const check = document.getElementById('autoRefreshCheck');
+            const interval = document.getElementById('refreshInterval');
+
+            const savedCheck = getCookie('jobsAutoRefresh');
+            const savedInterval = getCookie('jobsRefreshInterval');
+
+            if (savedCheck !== null) check.checked = (savedCheck === 'true');
+            if (savedInterval !== null) interval.value = savedInterval;
+
+            updateRefreshTimer();
+        }
+
+        function handleAutoRefreshChange() {
+            setCookie('jobsAutoRefresh', document.getElementById('autoRefreshCheck').checked, 30);
+            updateRefreshTimer();
+        }
+
+        function handleIntervalChange() {
+            setCookie('jobsRefreshInterval', document.getElementById('refreshInterval').value, 30);
+            updateRefreshTimer();
+        }
+
+        function updateRefreshTimer() {
+            if (refreshTimer) clearInterval(refreshTimer);
+
+            const isChecked = document.getElementById('autoRefreshCheck').checked;
+            const ms = parseInt(document.getElementById('refreshInterval').value);
+
+            if (isChecked) {
+                refreshTimer = setInterval(() => {
+                    refreshJobTable();
+                    refreshServerTime();
+                }, ms);
+            }
+        }
 
         function toggleColumns() {
             const table = document.getElementById('jobsTable');
@@ -256,7 +328,7 @@
                     const seen = new Set();
                     data.forEach((job, idx) => {
                         seen.add(String(job.id));
-                        
+
                         let row = existingRows[String(job.id)];
                         let isNew = false;
                         if (!row) {
@@ -282,17 +354,17 @@
                         // Always visible: ID (0), Name (1), Actions (12)
                         setCell(cells[0], job.id);
                         setCell(cells[1], job.jobName);
-                        
+
                         // Group 1: Processor (2), Status (3), Comment (4), Notes (5), Input (6), Output (7)
                         setCell(cells[2], (job.processorClassName || "").split('.').pop());
-                        
+
                         const newStatus = '<span class="status-' + job.status + '">' + job.status + '</span>'
                             + (job.errorReason ? '<div class="error-info" title="' + escHtml(job.errorReason) + '">'
                                 + truncate(job.errorReason, 60) + '</div>' : '');
                         if (cells[3].innerHTML !== newStatus) cells[3].innerHTML = newStatus;
 
-                        setCell(cells[4], job.comment || '-');
-                        
+                        setCell(cells[4], formatDateTime(job.scheduledRunTime));
+
                         const notesContent = job.notes || '-';
                         if (cells[5].innerText !== notesContent) {
                             cells[5].innerText = notesContent;
@@ -310,7 +382,7 @@
 
                         // Group 2: Submitted (8), Scheduled (9), Started (10), Ended (11)
                         setCell(cells[8], formatDateTimeWithTZ(job.jobSubmittedDateTime));
-                        setCell(cells[9], formatDateTime(job.scheduledRunTime));
+                        setCell(cells[9], job.comment || '-');
                         setCell(cells[10], formatDateTime(job.jobStartDateTime));
                         setCell(cells[11], formatDateTime(job.jobEndDateTime));
 
@@ -406,8 +478,6 @@
                 })
                 .catch(() => { });
         }
-
-        setInterval(() => { refreshJobTable(); refreshServerTime(); }, 5000);
     </script>
 
 </body>

@@ -4,6 +4,8 @@ import com.sel2in.jobProc.processor.InputData;
 import com.sel2in.jobProc.processor.JobEstimate;
 import com.sel2in.jobProc.processor.JobProcessor;
 import com.sel2in.jobProc.processor.OutputData;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.file.*;
@@ -39,6 +41,7 @@ import java.util.stream.Collectors;
  *   An HTML file saved to ./outputFiles/<jobId>/expense_report.html
  */
 public class ExpenseTrackerProcessor implements JobProcessor {
+    private static final Logger logger = LoggerFactory.getLogger(ExpenseTrackerProcessor.class);
 
     // ──────────────── Category ↔ keywords mapping ────────────────
     private static final Map<String, List<String>> CATEGORY_KEYWORDS = new LinkedHashMap<>();
@@ -81,7 +84,7 @@ public class ExpenseTrackerProcessor implements JobProcessor {
                 long sleepMs = Long.parseLong(params.get("sleep").toString());
                 long sleepOverhead = (long)(sleepMs * 1.05);
                 baseEstimateMs += sleepOverhead;
-                System.out.println("ExpenseTracker: Added " + sleepOverhead + "ms (105% of sleep) to estimate");
+                logger.info("ExpenseTracker: Added {}ms (105% of sleep) to estimate", sleepOverhead);
             } catch (NumberFormatException e) {
                 // Ignore invalid sleep values
             }
@@ -92,21 +95,21 @@ public class ExpenseTrackerProcessor implements JobProcessor {
 
     @Override
     public OutputData processJob(InputData inputData) {
-        System.out.println("═══════════════════════════════════════════════════════");
-        System.out.println("ExpenseTrackerProcessor VERSION 001");
-        System.out.println("═══════════════════════════════════════════════════════");
-        System.out.println("ExpenseTracker: Starting expense analysis for job: " + inputData.getJobName());
+        logger.info("═══════════════════════════════════════════════════════");
+        logger.info("ExpenseTrackerProcessor VERSION 001");
+        logger.info("═══════════════════════════════════════════════════════");
+        logger.info("ExpenseTracker: Starting expense analysis for job: {}", inputData.getJobName());
         
         // Debug: Print input parameters
         Map<String, Object> inputParams = inputData.getParameters();
-        System.out.println("ExpenseTracker: Checking for input parameters...");
+        logger.info("ExpenseTracker: Checking for input parameters...");
         if (inputParams != null && !inputParams.isEmpty()) {
-            System.out.println("ExpenseTracker: Received " + inputParams.size() + " input parameter(s):");
+            logger.info("ExpenseTracker: Received {} input parameter(s):", inputParams.size());
             for (Map.Entry<String, Object> entry : inputParams.entrySet()) {
-                System.out.println("  - " + entry.getKey() + " = " + entry.getValue() + " (" + entry.getValue().getClass().getSimpleName() + ")");
+                logger.info("  - {} = {} ({})", entry.getKey(), entry.getValue(), entry.getValue().getClass().getSimpleName());
             }
         } else {
-            System.out.println("ExpenseTracker: No input parameters received.");
+            logger.info("ExpenseTracker: No input parameters received.");
         }
 
         OutputData output = new OutputData();
@@ -162,7 +165,7 @@ public class ExpenseTrackerProcessor implements JobProcessor {
             Path reportPath = outputDir.resolve("expense_report.html");
             Files.write(reportPath, html.getBytes("UTF-8"));
 
-            System.out.println("ExpenseTracker: Report saved to " + reportPath.toAbsolutePath());
+            logger.info("ExpenseTracker: Report saved to {}", reportPath.toAbsolutePath());
 
             // ── 5. Return output ──
             output.setStatus("SUCCESS");
@@ -189,14 +192,14 @@ public class ExpenseTrackerProcessor implements JobProcessor {
                         long sleepMs = Long.parseLong(sleepObj.toString());
                         if (sleepMs > 0) {
                             double sleepSec = sleepMs / 1000.0;
-                            System.err.println(String.format("⚠️  WARNING: Sleeping for %.2f seconds (%d ms) before completion", sleepSec, sleepMs));
+                            logger.warn("⚠️  WARNING: Sleeping for {} seconds ({} ms) before completion", String.format("%.2f", sleepSec), sleepMs);
                             Thread.sleep(sleepMs);
                         }
                     } catch (NumberFormatException nfe) {
-                        System.err.println("⚠️  WARNING: 'sleep' parameter value is not a valid number: " + sleepObj);
+                        logger.warn("⚠️  WARNING: 'sleep' parameter value is not a valid number: {}", sleepObj);
                     } catch (InterruptedException ie) {
                         Thread.currentThread().interrupt();
-                        System.err.println("Sleep interrupted");
+                        logger.warn("Sleep interrupted");
                     }
                 }
             }
@@ -205,10 +208,10 @@ public class ExpenseTrackerProcessor implements JobProcessor {
             output.setStatus("FAILED");
             output.setMainErrorCode("PROCESSING_ERROR");
             output.setMainErrorReason(ex.getClass().getSimpleName() + ": " + ex.getMessage());
-            ex.printStackTrace();
+            logger.error("Processing error", ex);
         }
 
-        System.out.println("ExpenseTracker: Completed job: " + inputData.getJobName());
+        logger.info("ExpenseTracker: Completed job: {}", inputData.getJobName());
         return output;
     }
 

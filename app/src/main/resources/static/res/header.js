@@ -16,17 +16,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (navContainer) {
-        const currentPath = window.location.pathname;
-        const page = currentPath.split('/').pop() || 'index.html';
+        fetch('res/header.html')
+            .then(response => response.text())
+            .then(html => {
+                navContainer.innerHTML = html;
 
-        navContainer.innerHTML = `
-            <div class="nav">
-                <a href="index.html" class="${page === 'index.html' ? 'active' : ''}">Home</a>
-                <a href="jobs.html" class="${page === 'jobs.html' ? 'active' : ''}">Jobs Tracking</a>
-                <a href="jobsProcs.html" class="${page === 'jobsProcs.html' ? 'active' : ''}">Manage Processors</a>
-                <a href="admin.html" class="${page === 'admin.html' ? 'active' : ''}">Admin Control</a>
-                <a href="dashboard.html" class="${page === 'dashboard.html' ? 'active' : ''}">Dashboard</a>
-            </div>
-        `;
+                // Set active class based on current page
+                const currentPath = window.location.pathname;
+                const page = currentPath.split('/').pop() || 'index.html';
+
+                const links = navContainer.querySelectorAll('.nav a');
+                links.forEach(link => {
+                    const href = link.getAttribute('href');
+                    if (href === page || (page === '' && href === 'index.html')) {
+                        link.classList.add('active');
+                    }
+                });
+            })
+            .catch(error => console.error('Error loading header:', error));
     }
 });

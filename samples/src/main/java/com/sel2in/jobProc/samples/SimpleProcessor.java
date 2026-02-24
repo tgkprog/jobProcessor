@@ -6,6 +6,9 @@ import com.sel2in.jobProc.processor.JobEstimate;
 import com.sel2in.jobProc.processor.JobProcessor;
 import com.sel2in.jobProc.processor.OutputData;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,6 +17,7 @@ import java.util.Map;
  * It waits for a few seconds and returns a success status.
  */
 public class SimpleProcessor implements JobProcessor {
+    private static final Logger logger = LoggerFactory.getLogger(SimpleProcessor.class);
 
     @Override
     public JobEstimate reviewJob(InputData inputData) {
@@ -23,7 +27,7 @@ public class SimpleProcessor implements JobProcessor {
 
     @Override
     public OutputData processJob(InputData inputData) {
-        System.out.println("SimpleProcessor: Starting job: " + inputData.getJobName());
+        logger.info("SimpleProcessor: Starting job: {}", inputData.getJobName());
         
         try {
             // Simulate work
@@ -41,7 +45,7 @@ public class SimpleProcessor implements JobProcessor {
         params.put("processedAt", new java.util.Date().toString());
         output.setOutputParameters(params);
 
-        System.out.println("SimpleProcessor: Completed job: " + inputData.getJobName());
+        logger.info("SimpleProcessor: Completed job: {}", inputData.getJobName());
         return output;
     }
 }
