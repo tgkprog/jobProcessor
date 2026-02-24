@@ -1,5 +1,7 @@
 package com.sel2in.jobProc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -15,19 +17,21 @@ import java.nio.file.*;
  *  3. DataSeeder runs to populate AppParams if empty
  */
 @SpringBootApplication
+@org.springframework.scheduling.annotation.EnableScheduling
 public class JobProcApp {
+    private static final Logger logger = LoggerFactory.getLogger(JobProcApp.class);
 
     public static void main(String[] args) {
-        System.out.println("=== Job Processor Engine ===");
+        logger.info("=== Job Processor Engine ===");
 
         try {
             preLoad();
         } catch (Exception e) {
-            System.err.println("Pre-load warning: " + e.getMessage());
+            logger.warn("Pre-load warning: {}", e.getMessage());
         }
 
         SpringApplication.run(JobProcApp.class, args);
-        System.out.println("Job Processor Engine is ready on port 8087");
+        logger.info("Job Processor Engine is ready on port 8087");
     }
 
     /**
@@ -39,6 +43,6 @@ public class JobProcApp {
         for (String dir : dirs) {
             Files.createDirectories(Paths.get(dir));
         }
-        System.out.println("  Working directories OK.");
+        logger.info("  Working directories OK.");
     }
 }

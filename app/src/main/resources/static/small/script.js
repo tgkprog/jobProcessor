@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const updateStatus = async () => {
         try {
-            const response = await fetch('/api/status');
+            const response = await fetch('/small/api/status');
             const data = await response.json();
 
             statusBadge.textContent = data.status;
@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            const response = await fetch('/api/set', {
+            const response = await fetch('/small/api/set', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ time, sleep, randomSleep })
@@ -96,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const cancelSchedule = async () => {
         try {
-            const response = await fetch('/api/cancel', { method: 'POST' });
+            const response = await fetch('/small/api/cancel', { method: 'POST' });
             const data = await response.json();
             alert(data.message);
             updateStatus();

@@ -1,4 +1,4 @@
-package com.example.smallapp;
+package com.sel2in.jobProc.small;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,8 +13,8 @@ import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 
 @Service
-public class JobService {
-    private static final Logger logger = LoggerFactory.getLogger(JobService.class);
+public class SmallJobService {
+    private static final Logger logger = LoggerFactory.getLogger(SmallJobService.class);
 
     public static class JobHistory {
         public LocalDateTime scheduledTime;
@@ -38,7 +38,7 @@ public class JobService {
     private final List<JobHistory> history = new ArrayList<>();
     private JobHistory currentHistoryItem;
 
-    public JobService(TaskScheduler taskScheduler) {
+    public SmallJobService(TaskScheduler taskScheduler) {
         this.taskScheduler = taskScheduler;
     }
 
@@ -80,37 +80,35 @@ public class JobService {
             if (item != null) item.actualStartTime = LocalDateTime.now();
         }
         
-        logger.info("JOB STARTED at {}", LocalDateTime.now());
+        logger.info("SMALL JOB STARTED at {}", LocalDateTime.now());
         try {
             // Base sleep
-            logger.info("Sleeping for {} seconds...", sleepSeconds);
-            Thread.sleep((sleepSeconds * 1000L) + 1L);
+            logger.info("Small Job: Sleeping for {} seconds...", sleepSeconds);
+            Thread.sleep(sleepSeconds * 1000L);
 
             // Random sleep
             if (randomSleepSeconds > 0) {
                 long maxRandomMs = randomSleepSeconds * 1000L;
                 long randMs = 1 + (long)(Math.random() * maxRandomMs);
-                logger.info("Random sleep for {} ms...", randMs);
+                logger.info("Small Job: Random sleep for {} ms...", randMs);
                 Thread.sleep(randMs);
-            } else {
-                logger.info("No random sleep set");
             }
             if (item != null) item.status = "Ran";
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            logger.error("Job interrupted");
+            logger.error("Small Job interrupted");
             if (item != null) {
                 item.status = "Interrupted";
                 item.error = e.getMessage();
             }
         } catch (Exception e) {
-            logger.error("Job failed: {}", e.getMessage(), e);
+            logger.error("Small Job failed: {}", e.getMessage(), e);
             if (item != null) {
                 item.status = "Error";
                 item.error = e.getMessage();
             }
         } finally {
-            logger.info("JOB ENDED at {}", LocalDateTime.now());
+            logger.info("SMALL JOB ENDED at {}", LocalDateTime.now());
             synchronized (this) {
                 this.status = "Idle";
                 this.scheduledTime = null;

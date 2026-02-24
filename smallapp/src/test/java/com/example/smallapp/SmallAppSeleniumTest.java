@@ -51,7 +51,7 @@ public class SmallAppSeleniumTest {
 
     @Test
     public void testSetSchedule() {
-        driver.get("http://localhost:" + port);
+        driver.get("http://localhost:" + port + "/small/index.html");
 
         // Wait for page to load
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("status-badge")));
@@ -92,7 +92,7 @@ public class SmallAppSeleniumTest {
 
     @Test
     public void testCancelSchedule() {
-        driver.get("http://localhost:" + port);
+        driver.get("http://localhost:" + port + "/small/index.html");
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("status-badge")));
 
         // Set a schedule first
@@ -119,7 +119,7 @@ public class SmallAppSeleniumTest {
 
     @Test
     public void testExecutionStatus() {
-        driver.get("http://localhost:" + port);
+        driver.get("http://localhost:" + port + "/small/index.html");
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("status-badge")));
 
         // Schedule for 2 seconds from now

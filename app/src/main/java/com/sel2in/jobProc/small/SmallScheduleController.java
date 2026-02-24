@@ -1,4 +1,4 @@
-package com.example.smallapp;
+package com.sel2in.jobProc.small;
 
 import org.springframework.web.bind.annotation.*;
 
@@ -8,11 +8,11 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/small/api")
-public class ScheduleController {
+public class SmallScheduleController {
 
-    private final JobService jobService;
+    private final SmallJobService jobService;
 
-    public ScheduleController(JobService jobService) {
+    public SmallScheduleController(SmallJobService jobService) {
         this.jobService = jobService;
     }
 
@@ -36,7 +36,7 @@ public class ScheduleController {
         jobService.setSchedule(time, sleep, randomSleep);
         
         Map<String, Object> response = new HashMap<>();
-        response.put("message", "Schedule set");
+        response.put("message", "Small app schedule set");
         response.put("serverTime", LocalDateTime.now());
         response.put("timezone", jobService.getTimeZone());
         return response;
@@ -46,7 +46,7 @@ public class ScheduleController {
     public Map<String, Object> cancelSchedule() {
         jobService.cancelSchedule();
         Map<String, Object> response = new HashMap<>();
-        response.put("message", "Schedule cleared");
+        response.put("message", "Small app schedule cleared");
         return response;
     }
 }
