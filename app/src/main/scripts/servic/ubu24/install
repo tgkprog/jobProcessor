@@ -3,9 +3,25 @@
 SERVICE_NAME="jobproc1"
 SERVICE_FILE="${SERVICE_NAME}.service"
 SOURCE_DIR=$(dirname "$(readlink -f "$0")")
+# Get the absolute path of the 'app' directory
+# From: app/src/main/scripts/servic/ubu24/
+# To reach 'app', we go up 5 levels
+APP_DIR=$(readlink -f "$SOURCE_DIR/../../../../..")
 
-echo "Installing $SERVICE_NAME service..."
-sudo cp "$SOURCE_DIR/$SERVICE_FILE" /etc/systemd/system/
+# Use the current user or the user who invoked sudo
+TARGET_USER=${SUDO_USER:-$USER}
+
+echo "Installing $SERVICE_NAME service for user $TARGET_USER in $APP_DIR..."
+
+# Create a temporary service file with corrected paths and user
+sed -e "s|REPLACE_ME_USER|$TARGET_USER|g" \
+    -e "s|REPLACE_ME_APP_DIR|$APP_DIR|g" \
+    "$SOURCE_DIR/$SERVICE_FILE" > "/tmp/$SERVICE_FILE"
+
+sudo cp "/tmp/$SERVICE_FILE" /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable "$SERVICE_NAME"
-echo "Service $SERVICE_NAME installed and enabled."
+sudo systemctl restart "$SERVICE_NAME"
+
+echo "Service $SERVICE_NAME installed, enabled and restarted."
+rm "/tmp/$SERVICE_FILE"

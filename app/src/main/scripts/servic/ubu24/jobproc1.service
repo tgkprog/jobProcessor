@@ -3,10 +3,11 @@ Description=Job Processor Service jobproc1
 After=network.target
 
 [Service]
-User=k
-WorkingDirectory=/data/code/gt/tgk/jobProc/app
-ExecStart=/usr/bin/java -jar /data/code/gt/tgk/jobProc/app/bin/jobProc-fat.jar
+User=REPLACE_ME_USER
+WorkingDirectory=REPLACE_ME_APP_DIR
+ExecStart=/usr/bin/java -jar REPLACE_ME_APP_DIR/bin/jobProc-fat.jar
 Restart=always
+RestartSec=10
 
 [Install]
 WantedBy=multi-user.target
