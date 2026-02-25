@@ -23,6 +23,7 @@ public class ScheduleController {
         response.put("scheduledTime", jobService.getScheduledTime());
         response.put("history", jobService.getHistory());
         response.put("timezone", jobService.getTimeZone());
+        response.put("currentTime", LocalDateTime.now());
         return response;
     }
 

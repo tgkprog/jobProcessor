@@ -128,7 +128,10 @@
 <body>
 
     <div class="container">
-        <p class="server-time" id="serverTimeTop"></p>
+        <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <p class="server-time" id="serverTimeTop">Loading...</p>
+            <p id="tzLabelTop" style="font-size: 12px; color: var(--accent); font-weight: bold;"></p>
+        </div>
         <h1>Job Tracking <a href="create.html" style="font-size: 14px; margin-left: 15px;">➕ Create New Job</a></h1>
 
         <div class="section table-section">
@@ -175,6 +178,12 @@
             </div>
         </div>
         <p class="server-time" id="serverTimeBottom"></p>
+        <div style="text-align: center; margin-top: 10px;">
+            <span
+                style="color: #856404; background-color: #fff3cd; padding: 4px 12px; border-radius: 4px; font-size: 12px; border: 1px solid #ffeeba;">
+                ⚠️ Note: All scheduling and history timestamps are based on server time zone.
+            </span>
+        </div>
     </div>
 
     <script>
@@ -473,11 +482,18 @@
             fetch(API_BASE + '/serverTime')
                 .then(res => res.text())
                 .then(t => {
-                    document.getElementById('serverTimeTop').innerText = t;
-                    document.getElementById('serverTimeBottom').innerText = t;
+                    document.getElementById('serverTimeTop').innerText = "Server Time: " + t;
+                    document.getElementById('serverTimeBottom').innerText = "Server Time: " + t;
+                    const parts = t.split(' ');
+                    if (parts.length > 2) {
+                        document.getElementById('tzLabelTop').innerText = "(" + parts[parts.length - 1] + ")";
+                    }
                 })
                 .catch(() => { });
         }
+
+        // Fast clock refresh (every 5 seconds) - always runs
+        setInterval(refreshServerTime, 5000);
     </script>
 
 </body>

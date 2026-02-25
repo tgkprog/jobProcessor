@@ -256,3 +256,24 @@ footer {
     font-size: 0.75rem;
     color: var(--text-muted);
 }
+
+.server-time-top {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    color: var(--text-main);
+}
+
+.tz-label {
+    color: #818cf8;
+    font-weight: 600;
+}
+
+.timezone-warning {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--warning);
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    display: inline-block;
+    margin: 0.5rem 0;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}

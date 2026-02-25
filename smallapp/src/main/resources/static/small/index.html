@@ -15,6 +15,10 @@
         <header>
             <h1>Job Scheduler</h1>
             <p class="subtitle">Minimal Control Panel</p>
+            <div class="server-time-top">
+                Server Time: <span id="server-time-top">-</span>
+                (<span class="tz-label">...</span>)
+            </div>
         </header>
 
         <main>
@@ -74,6 +78,8 @@
         </main>
 
         <footer>
+            <p>Server Time: <span id="server-time-bottom">-</span> (<span class="tz-label">...</span>)</p>
+            <p class="timezone-warning">⚠️ Note: All scheduling is based on server time zone.</p>
             <p>&copy; 2026 Job Processor SmallApp</p>
         </footer>
     </div>

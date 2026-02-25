@@ -129,7 +129,15 @@
 <body>
 
     <div class="container">
-        <h1>Schedule New Job <a href="jobs.html" style="font-size: 14px; margin-left: 15px;">📋 View Jobs</a></h1>
+        <header
+            style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid var(--border); margin-bottom: 20px;">
+            <h1>Schedule New Job <a href="jobs.html" style="font-size: 14px; margin-left: 15px;">📋 View Jobs</a></h1>
+            <div id="serverTimeDisplay"
+                style="font-size: 14px; color: var(--text-muted); background: #f8f9fa; padding: 5px 10px; border-radius: 4px;">
+                Server Time: <span id="server-time-top">Loading...</span>
+                (<span class="tz-label">...</span>)
+            </div>
+        </header>
 
         <div class="success-message" id="successMessage">
             <h3>✅ Job Scheduled Successfully!</h3>
@@ -222,6 +230,15 @@
         </div>
     </div>
 
+    <footer
+        style="margin-top: 40px; padding: 20px; text-align: center; border-top: 1px solid var(--border); color: var(--text-muted);">
+        <p>Server Time: <span id="server-time-bottom">-</span> (<span class="tz-label">...</span>)</p>
+        <p
+            style="color: #856404; background-color: #fff3cd; display: inline-block; padding: 4px 12px; border-radius: 4px; font-size: 13px;">
+            ⚠️ Note: All scheduling is based on server time zone.
+        </p>
+    </footer>
+
     <script>
         const API_BASE = "/api/job";
 
@@ -234,6 +251,24 @@
                     onProcessorSelect();
                 }
             });
+
+            // Server Time Refresh
+            function refreshServerTime() {
+                fetch('/api/job/serverTime')
+                    .then(res => res.text())
+                    .then(text => {
+                        // Response is "YYYY-MM-DD HH:MM:SS ZoneId"
+                        const parts = text.split(' ');
+                        const timeStr = parts[0] + ' ' + parts[1];
+                        const tz = parts[2];
+                        document.getElementById('server-time-top').textContent = timeStr;
+                        document.getElementById('server-time-bottom').textContent = timeStr;
+                        document.querySelectorAll('.tz-label').forEach(el => el.textContent = tz);
+                    })
+                    .catch(err => console.warn("Fixed clock refresh failed", err));
+            }
+            refreshServerTime();
+            setInterval(refreshServerTime, 5000);
 
             const zone = document.getElementById('uploadZone');
             zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });

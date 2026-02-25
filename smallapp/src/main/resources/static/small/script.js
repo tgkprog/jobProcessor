@@ -2,6 +2,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const statusBadge = document.getElementById('status-badge');
     const scheduledTimeSpan = document.getElementById('scheduled-time');
     const serverTimezoneSpan = document.getElementById('server-timezone');
+    const serverTimeTop = document.getElementById('server-time-top');
+    const serverTimeBottom = document.getElementById('server-time-bottom');
+    const tzLabels = document.querySelectorAll('.tz-label');
+
     const datetimeInput = document.getElementById('schedule-datetime');
     const sleepInput = document.getElementById('sleep');
     const randomSleepInput = document.getElementById('random-sleep');
@@ -24,11 +28,20 @@ document.addEventListener('DOMContentLoaded', () => {
             scheduledTimeSpan.textContent = data.scheduledTime || 'None';
             serverTimezoneSpan.textContent = data.timezone;
 
+            updateServerTimeDisplay(data.currentTime, data.timezone);
             renderHistory(data.history);
         } catch (error) {
             console.error('Error fetching status:', error);
             statusBadge.textContent = 'ERROR';
         }
+    };
+
+    const updateServerTimeDisplay = (timeStr, timezone) => {
+        if (!timeStr) return;
+        const formatted = timeStr.replace('T', ' ').substring(0, 19);
+        if (serverTimeTop) serverTimeTop.textContent = formatted;
+        if (serverTimeBottom) serverTimeBottom.textContent = formatted;
+        tzLabels.forEach(el => el.textContent = timezone);
     };
 
     const renderHistory = (history) => {
@@ -122,7 +135,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initial status check
     updateStatus();
 
-    // Auto-refresh logic (every 7 seconds)
+    // Time-only refresh (every 5 seconds) - always runs
+    setInterval(async () => {
+        try {
+            const response = await fetch('/small/api/status');
+            const data = await response.json();
+            updateServerTimeDisplay(data.currentTime, data.timezone);
+        } catch (err) {
+            console.warn("Fast clock refresh failed", err);
+        }
+    }, 5000);
+
+    // Auto-refresh logic (every 7 seconds) - only runs if checked
     const autoRefreshCheckbox = document.getElementById('auto-refresh');
     setInterval(() => {
         if (autoRefreshCheckbox.checked) {
